@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "vex_33111c": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}

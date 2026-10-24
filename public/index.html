@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Team 33111C • VEX Match Schedule & Live Scouting</title>
+  <link rel="manifest" href="/manifest.json" />
+  <script>
+    try {
+      const storedScheme = localStorage.getItem("color-scheme");
+      if (storedScheme) {
+        document.querySelector('meta[name="color-scheme"]').content = storedScheme;
+      }
+    } catch(e) {}
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+
+      &:has(> head > meta[name="color-scheme"][content="dark"]) {
+        color-scheme: dark;
+      }
+      &:has(> head > meta[name="color-scheme"][content="light"]) {
+        color-scheme: light;
+      }
+
+      --bg: light-dark(#f8fafc, #0b1120);
+      --surface: light-dark(#ffffff, #151f32);
+      --surface-2: light-dark(#f1f5f9, #1e293b);
+      --border: light-dark(#cbd5e1, #2e3d52);
+      --text: light-dark(#0f172a, #f8fafc);
+      --muted: light-dark(#64748b, #94a3b8);
+      --red-bg: light-dark(rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.16));
+      --red-border: #ef4444;
+      --red-text: light-dark(#dc2626, #fca5a5);
+      --blue-bg: light-dark(rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.16));
+      --blue-border: #3b82f6;
+      --blue-text: light-dark(#2563eb, #93c5fd);
+      --gold-bg: light-dark(rgba(245, 158, 11, 0.14), rgba(245, 158, 11, 0.18));
+      --gold-border: #f59e0b;
+      --gold-text: light-dark(#d97706, #fde68a);
+      --green: #16a34a;
+      --accent: #f97316;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 90px;
+      line-height: 1.4;
+    }
+    /* Top Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background: light-dark(rgba(248, 250, 252, 0.94), rgba(11, 17, 32, 0.94));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      min-width: 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 3px 7px;
+      border-radius: 7px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .brand-text {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+    .brand-title {
+      font-size: 0.86rem;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+    .brand-sub {
+      font-size: 0.70rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sync-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      display: inline-block;
+      box-shadow: 0 0 5px var(--green);
+      flex-shrink: 0;
+    }
+    .header-actions {
+      display: flex;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .icon-btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      white-space: nowrap;
+    }
+      gap: 4px;
+    }
+    .icon-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    /* Focus Team & Delay Controls */
+    .controls-bar {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .team-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 8px;
+      flex: 1;
+      min-width: 170px;
+    }
+    .team-select-wrap label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .team-select-wrap select {
+      background: transparent;
+      color: var(--text);
+      border: none;
+      font-size: 0.85rem;
+      font-weight: 700;
+      width: 100%;
+      outline: none;
+    }
+    .delay-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 6px;
+      font-size: 0.75rem;
+    }
+    .delay-pill button {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 8px 10px;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+    /* Next Up Hero Banner */
+    .next-banner {
+      background: light-dark(linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%), linear-gradient(145deg, #1e293b 0%, #0f172a 100%));
+      border: 2px solid var(--gold-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.35));
+    }
+    .next-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .next-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gold-text);
+      background: var(--gold-bg);
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .next-eta {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .next-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 8px;
+    }
+    .next-match-title {
+      font-size: 1.35rem;
+      font-weight: 900;
+    }
+    .badge-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .field-badge {
+      background: #334155;
+      color: #f8fafc;
+      font-weight: 800;
+      font-size: 0.82rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid #475569;
+    }
+    .station-badge {
+      font-weight: 900;
+      font-size: 0.85rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+      text-transform: uppercase;
+    }
+    .station-badge.red {
+      background: #dc2626;
+      color: #fff;
+    }
+    .station-badge.blue {
+      background: #2563eb;
+      color: #fff;
+    }
+    /* Match Cards */
+    .match-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 9px 8px;
+      margin-bottom: 10px;
+      transition: transform 0.1s ease;
+      box-sizing: border-box;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .match-card.our-match {
+      border-width: 2px;
+    }
+    .match-card.our-red {
+      border-color: rgba(239, 68, 68, 0.7);
+    }
+    .match-card.our-blue {
+      border-color: rgba(59, 130, 246, 0.7);
+    }
+    .match-card.completed {
+      opacity: 0.78;
+    }
+    .match-card.on-field {
+      box-shadow: 0 0 0 2px var(--green);
+    }
+    .match-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .match-id-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .match-id {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .match-time {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .alliances-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 6px;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .alliance-box {
+      border-radius: 8px;
+      padding: 6px 5px;
+      border: 1px solid transparent;
+      min-width: 0;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    .alliance-box.red {
+      background: var(--red-bg);
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    .alliance-box.blue {
+      background: var(--blue-bg);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .alliance-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      gap: 4px;
+      min-width: 0;
+    }
+    .alliance-header span:first-child {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .alliance-box.red .alliance-header { color: var(--red-text); }
+    .alliance-box.blue .alliance-header { color: var(--blue-text); }
+    .score-pill {
+      background: light-dark(#ffffff, rgba(15, 23, 42, 0.85));
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: var(--text);
+      cursor: pointer;
+      border: 1px solid light-dark(#cbd5e1, rgba(255,255,255,0.2));
+      min-width: 38px;
+      text-align: center;
+      display: inline-block;
+      flex-shrink: 0;
+      line-height: 1.2;
+    }
+    .score-pill.has-score {
+      background: light-dark(#e0f2fe, #0f172a);
+      border-color: light-dark(#0284c7, #38bdf8);
+      color: light-dark(#0369a1, #38bdf8);
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+    }
+    .onfield-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px 6px;
+      font-size: 0.74rem;
+      flex-shrink: 0;
+    }
+    .onfield-pill button {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 5px;
+      padding: 2px 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .team-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: light-dark(#ffffff, rgba(15, 23, 42, 0.65));
+      border: 1px solid light-dark(#e2e8f0, rgba(255, 255, 255, 0.1));
+      border-radius: 6px;
+      padding: 4px 6px;
+      margin-top: 4px;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      color: var(--text);
+      height: 32px;
+      box-sizing: border-box;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .team-chip.focus-team {
+      background: light-dark(rgba(249, 115, 22, 0.18), linear-gradient(90deg, rgba(249, 115, 22, 0.32), rgba(234, 88, 12, 0.2)));
+      border-color: var(--accent);
+      font-weight: 800;
+    }
+    .team-chip-left {
+      min-width: 0;
+      flex: 1;
+      overflow: hidden;
+      margin-right: 3px;
+    }
+    .team-num {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .team-name-inline {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: light-dark(#475569, #94a3b8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 48px;
+    }
+    .scout-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: light-dark(#f1f5f9, rgba(255, 255, 255, 0.1));
+      color: var(--text);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .scout-badge.high {
+      background: light-dark(rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.22));
+      color: light-dark(#15803d, #86efac);
+      border: 1px solid light-dark(rgba(34, 197, 94, 0.4), rgba(34, 197, 94, 0.4));
+    }
+    .scout-badge.warn {
+      background: light-dark(rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.22));
+      color: light-dark(#b91c1c, #fca5a5);
+      border: 1px solid light-dark(rgba(239, 68, 68, 0.4), rgba(239, 68, 68, 0.4));
+    }
+    .match-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px solid var(--border);
+      font-size: 0.74rem;
+      color: var(--muted);
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .mini-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .turnaround-alert {
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px dashed var(--gold-border);
+      color: var(--gold-text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .break-banner {
+      background: light-dark(rgba(2, 132, 199, 0.12), rgba(56, 189, 248, 0.12));
+      border: 1px solid light-dark(rgba(2, 132, 199, 0.35), rgba(56, 189, 248, 0.35));
+      color: light-dark(#0369a1, #bae6fd);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    /* Filter Row */
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 150px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+    .pill-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .pill-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    /* Bottom Tab Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: light-dark(rgba(255, 255, 255, 0.96), rgba(15, 23, 42, 0.96));
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    }
+    .nav-tab {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 4px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 8px;
+    }
+    .nav-tab.active {
+      color: var(--accent);
+      background: rgba(249, 115, 22, 0.12);
+    }
+    /* Responsive Table (modern-web-guidance: responsive-table) */
+    .table-wrapper {
+      overflow: auto;
+      max-inline-size: 100%;
+      max-block-size: min(650px, 78vh);
+      container-type: inline-size;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.82rem;
+    }
+    caption {
+      text-align: left;
+      padding: 10px 12px;
+      font-weight: 800;
+      color: var(--muted);
+      font-size: 0.78rem;
+      border-bottom: 1px solid var(--border);
+    }
+    thead {
+      position: sticky;
+      inset-block-start: 0;
+      z-index: 1;
+      background: var(--surface-2);
+    }
+    th, td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    thead th {
+      color: var(--muted);
+      font-weight: 700;
+    }
+    tbody th {
+      position: sticky;
+      inset-inline-start: 0;
+      background: var(--surface);
+      z-index: 1;
+      font-weight: 800;
+      color: var(--text);
+    }
+    @container (width < 600px) {
+      table, thead, tbody, tr, th, td {
+        display: block;
+      }
+      thead {
+        /* MANDATORY: Hide column header from layout and screen readers. */
+        display: none;
+      }
+      tr {
+        margin-block-end: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+      tbody th {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 2;
+        background: var(--surface-2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      table {
+        --label-2: "Total (/25)";
+        --label-3: "Auton / Load / Score";
+        --label-4: "Toggle / Drive";
+        --label-5: "Reports & Notes";
+      }
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+      }
+      td:nth-child(2)::before {
+        content: var(--label-2) ": ";
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:nth-child(3)::before {
+        content: var(--label-3) ": ";
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:nth-child(4)::before {
+        content: var(--label-4) ": ";
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:nth-child(5)::before {
+        content: var(--label-5) ": ";
+        color: var(--muted);
+        font-weight: 600;
+      }
+    }
+    /* Native Dialogs (modern-web-guidance: light-dismiss-a-dialog) */
+    dialog {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      width: min(94vw, 480px);
+      max-height: 88vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+    }
+    dialog::backdrop {
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(3px);
+    }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dialog-header h2 {
+      margin: 0;
+      font-size: 1.05rem;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .rating-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+    }
+    .rate-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 0;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .rate-btn.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .submitter-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .sub-pill {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 11px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sub-pill.selected {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+    .text-input {
+      width: 100%;
+      background: light-dark(#ffffff, var(--bg));
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 10px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+    .full-btn {
+      width: 100%;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.92rem;
+      padding: 11px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .comment-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-top">
+      <div class="brand">
+        <span class="brand-badge" id="headerTeamBadge">33111C</span>
+        <div class="brand-text">
+          <div class="brand-title" id="eventTitle">TX Halloween Madness</div>
+          <div class="brand-sub">
+            <span class="sync-dot" id="syncDot"></span>
+            <span id="syncStatusText">Live Synced</span>
+          </div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn primary" onclick="openScoutModal()">➕ Scout</button>
+        <button class="icon-btn" onclick="openShareModal()">📱 QR</button>
+        <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Light/Dark Mode" style="padding:5px 6px;">🌙</button>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="team-select-wrap">
+        <label for="focusTeamSelect">Team:</label>
+        <select id="focusTeamSelect" onchange="setFocusTeam(this.value)"></select>
+      </div>
+      <div class="onfield-pill" title="Current match playing on the field right now">
+        <span style="color:var(--muted);font-weight:600;">On Field:</span>
+        <button type="button" onclick="adjustOnField(-1)">◀</button>
+        <strong style="color:#22c55e;font-size:0.85rem;" id="onFieldHeaderBadge">Q21</strong>
+        <button type="button" onclick="adjustOnField(1)">▶</button>
+      </div>
+      <div class="delay-pill" title="Adjust if tournament is behind/ahead of schedule">
+        <span id="delayLabel">On Time</span>
+        <button onclick="adjustDelay(-3)">-3m</button>
+        <button onclick="adjustDelay(3)">+3m</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: MY TEAM -->
+    <section id="tab-my" class="tab-panel">
+      <div id="nextUpContainer"></div>
+      <div id="myMatchesList"></div>
+    </section>
+
+    <!-- TAB 2: ALL 74 MATCHES -->
+    <section id="tab-all" class="tab-panel hidden">
+      <div class="filter-row">
+        <input type="search" id="matchSearchInput" class="search-input" placeholder="Search team # or name (e.g. 16329U, Wraith)..." oninput="renderAllMatches()" />
+        <button class="pill-btn active" id="fieldBtn-ALL" onclick="setFieldFilter('ALL')">All</button>
+        <button class="pill-btn" id="fieldBtn-Field A" onclick="setFieldFilter('Field A')">Field A</button>
+        <button class="pill-btn" id="fieldBtn-Field B" onclick="setFieldFilter('Field B')">Field B</button>
+        <button class="pill-btn" id="fieldBtn-Field C" onclick="setFieldFilter('Field C')">Field C</button>
+      </div>
+      <div id="allMatchesList"></div>
+    </section>
+
+    <!-- TAB 3: SCOUTING & PICK LIST -->
+    <section id="tab-scout" class="tab-panel hidden">
+      <div class="filter-row">
+        <input type="search" id="scoutSearchInput" class="search-input" placeholder="Filter teams by # or comment..." oninput="renderPickList()" />
+        <button class="icon-btn primary" onclick="openScoutModal()">➕ Add Report</button>
+        <button class="icon-btn" onclick="exportScoutingCSV()">⬇️ CSV</button>
+        <a class="icon-btn" href="https://forms.gle/b9CZpAcoeqJHzmAd8" target="_blank" rel="noopener" style="text-decoration:none">📋 Raw Form</a>
+      </div>
+
+      <div tabindex="0" role="region" aria-labelledby="picklist-caption" class="table-wrapper">
+        <table>
+          <caption id="picklist-caption">Live Team Scouting Averages & Pick-List (Tap any team to view/add notes)</caption>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Avg Total (/25)</th>
+              <th>Auton / Load / Score</th>
+              <th>Toggle / Drive</th>
+              <th>Reports & Notes</th>
+            </tr>
+          </thead>
+          <tbody id="pickListBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- BOTTOM NAVIGATION -->
+  <nav class="bottom-nav" aria-label="Primary View Navigation">
+    <button class="nav-tab active" id="nav-my" onclick="switchTab('my')">
+      <span>★ My Team (<span id="myCountLabel">6</span>)</span>
+    </button>
+    <button class="nav-tab" id="nav-all" onclick="switchTab('all')">
+      <span>📅 All Matches (74)</span>
+    </button>
+    <button class="nav-tab" id="nav-scout" onclick="switchTab('scout')">
+      <span>🔭 Scouting (<span id="scoutCountLabel">12</span>)</span>
+    </button>
+  </nav>
+
+  <!-- DIALOG 1: SCOUTING FORM + TEAM PROFILE (modern-web-guidance: light-dismiss-a-dialog) -->
+  <dialog id="scoutDialog" closedby="any" aria-labelledby="scoutDialogTitle">
+    <div class="dialog-header">
+      <h2 id="scoutDialogTitle">🔭 Team Scouting</h2>
+      <button class="mini-btn" onclick="document.getElementById('scoutDialog').close()">✕ Close</button>
+    </div>
+
+    <div id="teamExistingReports" style="margin-bottom:14px;"></div>
+
+    <form id="scoutForm" onsubmit="submitScoutReport(event)">
+      <div class="form-group">
+        <label>Submitter Name *</label>
+        <div class="submitter-pills" id="submitterPills">
+          <button type="button" class="sub-pill selected" onclick="selectSubmitter('Andrew')">Andrew</button>
+          <button type="button" class="sub-pill" onclick="selectSubmitter('Benjamin')">Benjamin</button>
+          <button type="button" class="sub-pill" onclick="selectSubmitter('Kevin')">Kevin</button>
+          <button type="button" class="sub-pill" onclick="selectSubmitter('Roger')">Roger</button>
+          <button type="button" class="sub-pill" onclick="selectSubmitter('Other')">Other</button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:8px;">
+        <div class="form-group">
+          <label for="scoutTeamSelect">Team Number *</label>
+          <select id="scoutTeamSelect" class="text-input" onchange="renderTeamHistoryInModal(this.value)" required></select>
+        </div>
+        <div class="form-group">
+          <label for="scoutMatchInput">Match (opt)</label>
+          <input type="text" id="scoutMatchInput" class="text-input" placeholder="e.g. Q30" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Auton (0 = None, 5 = Excellent)</label>
+        <div class="rating-row" data-field="auton"></div>
+      </div>
+      <div class="form-group">
+        <label>Match Loading (0 = None, 5 = Excellent)</label>
+        <div class="rating-row" data-field="loading"></div>
+      </div>
+      <div class="form-group">
+        <label>Scoring (0 = None, 5 = Excellent)</label>
+        <div class="rating-row" data-field="scoring"></div>
+      </div>
+      <div class="form-group">
+        <label>Toggle Mech (0 = None, 5 = Excellent)</label>
+        <div class="rating-row" data-field="toggle"></div>
+      </div>
+      <div class="form-group">
+        <label>Driving & Game Play (0 = None, 5 = Excellent)</label>
+        <div class="rating-row" data-field="driving"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="scoutCommentInput">Comment (optional)</label>
+        <input type="text" id="scoutCommentInput" class="text-input" placeholder="e.g. Stacks 6 levels, strong auton, tipped..." />
+      </div>
+
+      <button type="submit" class="full-btn" id="scoutSubmitBtn">✅ Save to Live App + Google Form</button>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 2: SCORE & MATCH STATUS MODAL -->
+  <dialog id="scoreDialog" closedby="any" aria-labelledby="scoreDialogTitle">
+    <div class="dialog-header">
+      <h2 id="scoreDialogTitle">Enter Match Score & Timing</h2>
+      <button class="mini-btn" onclick="document.getElementById('scoreDialog').close()">✕ Close</button>
+    </div>
+    <form onsubmit="saveMatchScore(event)">
+      <input type="hidden" id="scoreMatchId" />
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div class="form-group">
+          <label for="redScoreInput" style="color:var(--red-text)">🔴 Red Score</label>
+          <input type="number" id="redScoreInput" class="text-input" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label for="blueScoreInput" style="color:var(--blue-text)">🔵 Blue Score</label>
+          <input type="number" id="blueScoreInput" class="text-input" placeholder="0" min="0" />
+        </div>
+      </div>
+      <button type="submit" class="full-btn">💾 Save Live Score</button>
+    </form>
+
+    <hr style="border-color:var(--border); margin:12px 0;" />
+
+    <!-- TIME ADJUSTMENT & CASCADING DELAY -->
+    <div class="form-group">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+        <label style="margin:0; font-weight:800; font-size:0.8rem;">⏱️ Start Time for <span id="timeAdjustMatchLabel">Q_</span> & Subsequent</label>
+        <span id="matchDelayBadge" style="color:var(--accent); font-weight:800; font-size:0.75rem;">+0m</span>
+      </div>
+      <div style="font-size:0.72rem; color:var(--muted); margin-bottom:6px;">
+        Adjusting this match automatically cascades to all subsequent matches:
+      </div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(-5)">-5m</button>
+          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(-3)">-3m</button>
+        </div>
+        <strong id="matchEstTimeDisplay" style="font-size:0.95rem; color:var(--text); min-width:75px; text-align:center;">11:57 AM</strong>
+        <div style="display:flex; gap:4px;">
+          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(3)">+3m</button>
+          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(5)">+5m</button>
+        </div>
+      </div>
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <button type="button" class="mini-btn" style="flex:1; padding:7px;" onclick="syncCurrentMatchToClock()">⚡ Set Start Time to NOW (<span id="clockNowSpan"></span>)</button>
+        <button type="button" class="mini-btn" style="padding:7px;" onclick="resetCurrentMatchDelay()">Reset</button>
+      </div>
+    </div>
+
+    <hr style="border-color:var(--border); margin:12px 0;" />
+    <button type="button" class="mini-btn" style="width:100%; padding:9px;" onclick="setMatchOnField()">📍 Mark This Match as On Field Now</button>
+  </dialog>
+
+  <!-- DIALOG 3: SHARE QR & REUSE FOR FUTURE TOURNAMENTS -->
+  <dialog id="shareDialog" closedby="any" aria-labelledby="shareDialogTitle">
+    <div class="dialog-header">
+      <h2 id="shareDialogTitle">📱 Share with Team & Future Games</h2>
+      <button class="mini-btn" onclick="document.getElementById('shareDialog').close()">✕ Close</button>
+    </div>
+    <div style="text-align:center; padding:8px 0;">
+      <div style="font-weight:800; font-size:0.95rem; margin-bottom:6px;">https://vex-33111c.web.app</div>
+      <div style="font-size:0.76rem; color:var(--muted); margin-bottom:10px;">Scan with any phone camera to open live schedule & scouting:</div>
+      <div id="qrContainer" style="background:#fff; padding:12px; border-radius:12px; display:inline-block;"></div>
+      <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
+        <button class="icon-btn primary" onclick="shareLinkNative()">📤 Share Link</button>
+        <button class="icon-btn" onclick="navigator.clipboard.writeText(window.location.href); alert('Copied link!')">📋 Copy URL</button>
+      </div>
+    </div>
+    <hr style="border-color:var(--border); margin:14px 0;" />
+    <div class="form-group">
+      <label for="customSheetInput">🔄 Reuse for Future Tournaments (Paste Google Sheet URL or ID)</label>
+      <div style="font-size:0.72rem; color:var(--muted); margin-bottom:6px;">
+        Set any schedule Google Sheet to "Anyone with link can view" and paste it below to load a new tournament:
+      </div>
+      <input type="text" id="customSheetInput" class="text-input" placeholder="https://docs.google.com/spreadsheets/d/..." />
+      <button type="button" class="mini-btn" style="margin-top:6px; width:100%; padding:8px;" onclick="loadCustomTournamentSheet()">Load Schedule from Sheet</button>
+    </div>
+  </dialog>
+
+  <script>
+    // Embedded Data: 74 Matches from Texas Halloween Madness + 53 Form Team Options + 12 Initial Scout Reports
+    const DEFAULT_MATCHES = [{"id": "Q1", "num": 1, "time": "9:30 AM", "field": "Field A", "red1": "16329B", "red2": "98250E", "blue1": "3162Z", "blue2": "47287D"}, {"id": "Q2", "num": 2, "time": "9:33 AM", "field": "Field B", "red1": "19713H", "red2": "77786H", "blue1": "63310A", "blue2": "77360Z"}, {"id": "Q3", "num": 3, "time": "9:36 AM", "field": "Field C", "red1": "16329U", "red2": "98250C", "blue1": "16329E", "blue2": "98250D"}, {"id": "Q4", "num": 4, "time": "9:39 AM", "field": "Field A", "red1": "47287E", "red2": "60777B", "blue1": "16329T", "blue2": "77786C"}, {"id": "Q5", "num": 5, "time": "9:42 AM", "field": "Field B", "red1": "16329R", "red2": "20002X", "blue1": "1412J", "blue2": "19713B"}, {"id": "Q6", "num": 6, "time": "9:45 AM", "field": "Field C", "red1": "19713N", "red2": "77786S", "blue1": "58290G", "blue2": "98250A"}, {"id": "Q7", "num": 7, "time": "9:48 AM", "field": "Field A", "red1": "77360A", "red2": "77786E", "blue1": "77360C", "blue2": "83280Y"}, {"id": "Q8", "num": 8, "time": "9:51 AM", "field": "Field B", "red1": "16329V", "red2": "19713C", "blue1": "1412E", "blue2": "82717A"}, {"id": "Q9", "num": 9, "time": "9:54 AM", "field": "Field C", "red1": "16329A", "red2": "3162A", "blue1": "22603B", "blue2": "83280W"}, {"id": "Q10", "num": 10, "time": "9:57 AM", "field": "Field A", "red1": "54600A", "red2": "77786Z", "blue1": "47287C", "blue2": "77038V"}, {"id": "Q11", "num": 11, "time": "10:00 AM", "field": "Field B", "red1": "60777R", "red2": "98250B", "blue1": "3162H", "blue2": "33111C"}, {"id": "Q12", "num": 12, "time": "10:03 AM", "field": "Field C", "red1": "16329C", "red2": "63310G", "blue1": "77360B", "blue2": "77786D"}, {"id": "Q13", "num": 13, "time": "10:06 AM", "field": "Field A", "red1": "16329T", "red2": "43485K", "blue1": "16329B", "blue2": "98250C"}, {"id": "Q14", "num": 14, "time": "10:09 AM", "field": "Field B", "red1": "19713H", "red2": "58290G", "blue1": "3162Z", "blue2": "60777B"}, {"id": "Q15", "num": 15, "time": "10:12 AM", "field": "Field C", "red1": "3162H", "red2": "77786C", "blue1": "1412E", "blue2": "83280Y"}, {"id": "Q16", "num": 16, "time": "10:15 AM", "field": "Field A", "red1": "47287C", "red2": "77786H", "blue1": "47287D", "blue2": "77786E"}, {"id": "Q17", "num": 17, "time": "10:18 AM", "field": "Field B", "red1": "54600A", "red2": "77360A", "blue1": "19713N", "blue2": "83280W"}, {"id": "Q18", "num": 18, "time": "10:21 AM", "field": "Field C", "red1": "63310G", "red2": "82717A", "blue1": "22603B", "blue2": "60777R"}, {"id": "Q19", "num": 19, "time": "10:24 AM", "field": "Field A", "red1": "19713C", "red2": "3162A", "blue1": "43485K", "blue2": "98250E"}, {"id": "Q20", "num": 20, "time": "10:27 AM", "field": "Field B", "red1": "63310A", "red2": "77786S", "blue1": "47287E", "blue2": "77786D"}, {"id": "Q21", "num": 21, "time": "10:30 AM", "field": "Field C", "red1": "16329U", "red2": "33111C", "blue1": "1412J", "blue2": "77360B"}, {"id": "Q22", "num": 22, "time": "10:33 AM", "field": "Field A", "red1": "19713B", "red2": "98250D", "blue1": "77360Z", "blue2": "77786Z"}, {"id": "Q23", "num": 23, "time": "10:36 AM", "field": "Field B", "red1": "16329C", "red2": "16329E", "blue1": "77038V", "blue2": "98250B"}, {"id": "Q24", "num": 24, "time": "10:39 AM", "field": "Field C", "red1": "77360C", "red2": "98250A", "blue1": "16329V", "blue2": "20002X"}, {"id": "Q25", "num": 25, "time": "10:42 AM", "field": "Field A", "red1": "16329A", "red2": "16329R", "blue1": "58290G", "blue2": "77786H"}, {"id": "Q26", "num": 26, "time": "10:45 AM", "field": "Field B", "red1": "60777R", "red2": "77786Z", "blue1": "16329B", "blue2": "16329U"}, {"id": "Q27", "num": 27, "time": "10:48 AM", "field": "Field C", "red1": "47287D", "red2": "83280Y", "blue1": "63310A", "blue2": "83280W"}, {"id": "Q28", "num": 28, "time": "10:51 AM", "field": "Field A", "red1": "20002X", "red2": "77360A", "blue1": "3162H", "blue2": "98250C"}, {"id": "Q29", "num": 29, "time": "10:54 AM", "field": "Field B", "red1": "19713H", "red2": "43485K", "blue1": "19713B", "blue2": "47287E"}, {"id": "Q30", "num": 30, "time": "10:57 AM", "field": "Field C", "red1": "33111C", "red2": "60777B", "blue1": "16329E", "blue2": "98250A"}, {"id": "Q31", "num": 31, "time": "11:00 AM", "field": "Field A", "red1": "1412J", "red2": "16329C", "blue1": "16329V", "blue2": "98250E"}, {"id": "Q32", "num": 32, "time": "11:03 AM", "field": "Field B", "red1": "19713C", "red2": "77786S", "blue1": "16329R", "blue2": "77786E"}, {"id": "Q33", "num": 33, "time": "11:06 AM", "field": "Field C", "red1": "16329A", "red2": "19713N", "blue1": "77360C", "blue2": "77786D"}, {"id": "Q34", "num": 34, "time": "11:09 AM", "field": "Field A", "red1": "47287C", "red2": "77360Z", "blue1": "22603B", "blue2": "77360B"}, {"id": "Q35", "num": 35, "time": "11:12 AM", "field": "Field B", "red1": "3162Z", "red2": "77038V", "blue1": "16329T", "blue2": "82717A"}, {"id": "Q36", "num": 36, "time": "11:15 AM", "field": "Field C", "red1": "1412E", "red2": "98250D", "blue1": "54600A", "blue2": "63310G"}, {"id": "Q37", "num": 37, "time": "11:18 AM", "field": "Field A", "red1": "3162A", "red2": "77786C", "blue1": "47287D", "blue2": "98250B"}, {"id": "Q38", "num": 38, "time": "11:21 AM", "field": "Field B", "red1": "58290G", "red2": "77786D", "blue1": "19713C", "blue2": "77360Z"}, {"id": "Q39", "num": 39, "time": "11:24 AM", "field": "Field C", "red1": "60777B", "red2": "98250D", "blue1": "16329R", "blue2": "98250E"}, {"id": "Q40", "num": 40, "time": "11:27 AM", "field": "Field A", "red1": "22603B", "red2": "77786C", "blue1": "16329C", "blue2": "77786S"}, {"id": "Q41", "num": 41, "time": "12:15 PM", "field": "Field B", "red1": "1412E", "red2": "98250B", "blue1": "19713B", "blue2": "98250A"}, {"id": "Q42", "num": 42, "time": "12:18 PM", "field": "Field C", "red1": "19713N", "red2": "43485K", "blue1": "77786Z", "blue2": "83280Y"}, {"id": "Q43", "num": 43, "time": "12:21 PM", "field": "Field A", "red1": "3162A", "red2": "77038V", "blue1": "16329V", "blue2": "60777R"}, {"id": "Q44", "num": 44, "time": "12:24 PM", "field": "Field B", "red1": "16329B", "red2": "47287E", "blue1": "16329A", "blue2": "63310G"}, {"id": "Q45", "num": 45, "time": "12:27 PM", "field": "Field C", "red1": "19713H", "red2": "47287C", "blue1": "16329E", "blue2": "16329T"}, {"id": "Q46", "num": 46, "time": "12:30 PM", "field": "Field A", "red1": "3162Z", "red2": "77360B", "blue1": "83280W", "blue2": "98250C"}, {"id": "Q47", "num": 47, "time": "12:33 PM", "field": "Field B", "red1": "1412J", "red2": "77360A", "blue1": "77786H", "blue2": "82717A"}, {"id": "Q48", "num": 48, "time": "12:36 PM", "field": "Field C", "red1": "16329U", "red2": "77360C", "blue1": "54600A", "blue2": "63310A"}, {"id": "Q49", "num": 49, "time": "12:39 PM", "field": "Field A", "red1": "3162H", "red2": "77786E", "blue1": "20002X", "blue2": "33111C"}, {"id": "Q50", "num": 50, "time": "12:42 PM", "field": "Field B", "red1": "77786H", "red2": "98250C", "blue1": "16329V", "blue2": "77786D"}, {"id": "Q51", "num": 51, "time": "12:45 PM", "field": "Field C", "red1": "47287D", "red2": "77360Z", "blue1": "63310G", "blue2": "77360A"}, {"id": "Q52", "num": 52, "time": "12:48 PM", "field": "Field A", "red1": "1412E", "red2": "20002X", "blue1": "16329T", "blue2": "77786S"}, {"id": "Q53", "num": 53, "time": "12:51 PM", "field": "Field B", "red1": "16329U", "red2": "83280W", "blue1": "3162H", "blue2": "60777B"}, {"id": "Q54", "num": 54, "time": "12:54 PM", "field": "Field C", "red1": "16329C", "red2": "19713N", "blue1": "19713C", "blue2": "98250D"}, {"id": "Q55", "num": 55, "time": "12:57 PM", "field": "Field A", "red1": "16329A", "red2": "77786Z", "blue1": "77786C", "blue2": "98250E"}, {"id": "Q56", "num": 56, "time": "1:00 PM", "field": "Field B", "red1": "22603B", "red2": "3162Z", "blue1": "83280Y", "blue2": "98250B"}, {"id": "Q57", "num": 57, "time": "1:03 PM", "field": "Field C", "red1": "16329E", "red2": "77786E", "blue1": "43485K", "blue2": "54600A"}, {"id": "Q58", "num": 58, "time": "1:06 PM", "field": "Field A", "red1": "47287E", "red2": "77360B", "blue1": "3162A", "blue2": "77360C"}, {"id": "Q59", "num": 59, "time": "1:09 PM", "field": "Field B", "red1": "19713H", "red2": "98250A", "blue1": "16329R", "blue2": "82717A"}, {"id": "Q60", "num": 60, "time": "1:12 PM", "field": "Field C", "red1": "19713B", "red2": "63310A", "blue1": "16329B", "blue2": "58290G"}, {"id": "Q61", "num": 61, "time": "1:15 PM", "field": "Field A", "red1": "33111C", "red2": "47287C", "blue1": "1412J", "blue2": "77038V"}, {"id": "Q62", "num": 62, "time": "1:18 PM", "field": "Field B", "red1": "60777R", "red2": "77786E", "blue1": "19713H", "blue2": "77786C"}, {"id": "Q63", "num": 63, "time": "1:21 PM", "field": "Field C", "red1": "16329U", "red2": "58290G", "blue1": "16329C", "blue2": "83280Y"}, {"id": "Q64", "num": 64, "time": "1:24 PM", "field": "Field A", "red1": "54600A", "red2": "82717A", "blue1": "33111C", "blue2": "77786D"}, {"id": "Q65", "num": 65, "time": "1:27 PM", "field": "Field B", "red1": "77360A", "red2": "77786Z", "blue1": "19713C", "blue2": "98250B"}, {"id": "Q66", "num": 66, "time": "1:30 PM", "field": "Field C", "red1": "16329R", "red2": "98250C", "blue1": "47287C", "blue2": "60777R"}, {"id": "Q67", "num": 67, "time": "1:33 PM", "field": "Field A", "red1": "47287E", "red2": "77786H", "blue1": "22603B", "blue2": "98250A"}, {"id": "Q68", "num": 68, "time": "1:36 PM", "field": "Field B", "red1": "47287D", "red2": "77360C", "blue1": "43485K", "blue2": "77786S"}, {"id": "Q69", "num": 69, "time": "1:39 PM", "field": "Field C", "red1": "1412J", "red2": "3162H", "blue1": "16329B", "blue2": "16329E"}, {"id": "Q70", "num": 70, "time": "1:42 PM", "field": "Field A", "red1": "77360Z", "red2": "98250E", "blue1": "1412E", "blue2": "19713N"}, {"id": "Q71", "num": 71, "time": "1:45 PM", "field": "Field B", "red1": "60777B", "red2": "63310G", "blue1": "3162A", "blue2": "63310A"}, {"id": "Q72", "num": 72, "time": "1:48 PM", "field": "Field C", "red1": "16329T", "red2": "19713B", "blue1": "16329V", "blue2": "83280W"}, {"id": "Q73", "num": 73, "time": "1:51 PM", "field": "Field A", "red1": "3162Z", "red2": "98250D", "blue1": "16329A", "blue2": "20002X"}, {"id": "Q74", "num": 74, "time": "1:54 PM", "field": "Field B", "red1": "77038V", "red2": "77360B", "blue1": "19713C*", "blue2": "77786H*"}];
+    const FORM_TEAM_OPTIONS = ["1412E    Hypercharged!", "1412J    BANSHEE!", "1412S    Silvia", "16329A    Doom", "16329B    FUSION", "16329C    YUGEN", "16329E    Wraith", "16329R    REVOLUTION", "16329T    J.A.R.V.I.S", "16329U    PROTON", "16329V    DEJA", "19713A    Robotics II", "19713B    Robotics II", "19713C    Robotics II", "19713H    Robotics II", "19713N    Robotics II", "20002X    GOLD!", "22603B    Black", "3162A    HHS GearHeads", "3162H    HHS GearHeads", "3162Z    HHS GearHeads", "43485K    The Falconeers", "47287A    CreekBots", "47287B    CougarBots", "47287C    Ahhhh CC", "47287D    Cee-Cee", "47287E    W.H.A.T. !", "54600A    Team Dynamite", "58290G    Awtybots Girls", "60777B    Mohawk Warriors Blue", "60777R    Mohawk Warriors Red", "63310A    Event Horizon", "63310G    Valkyrie", "77038V", "77360A    Wildcats", "77360B    Bad Luck", "77360C    Wild Cat", "77360Z    Come and Take It", "77786A    Bears A", "77786C    Bears C", "77786D    Bears D", "77786E    Bears E", "77786H    CyberKings", "77786S    Skunkworks", "77786Z    The CDs", "82717A    Hi-Tech Hillbillies", "83280W    LC Rampage", "83280Y    Lobos Rojos", "98250A    RoboJagsA", "98250B", "98250C", "98250D", "98250E"];
+    const SEED_SCOUTING = [{"id": "seed_1", "ts": "10/24/2026 9:00:45", "submitter": "Andrew", "team": "63310G", "match": "", "auton": 2, "loading": 1, "scoring": 2, "toggle": 0, "driving": 3, "comment": ""}, {"id": "seed_2", "ts": "10/24/2026 9:18:43", "submitter": "Andrew", "team": "1412J", "match": "", "auton": 4, "loading": 5, "scoring": 5, "toggle": 5, "driving": 5, "comment": ""}, {"id": "seed_3", "ts": "10/24/2026 9:58:24", "submitter": "Andrew", "team": "77360Z", "match": "", "auton": 3, "loading": 4, "scoring": 3, "toggle": 3, "driving": 2, "comment": ""}, {"id": "seed_4", "ts": "10/24/2026 9:58:57", "submitter": "Andrew", "team": "77786H", "match": "", "auton": 2, "loading": 3, "scoring": 4, "toggle": 3, "driving": 5, "comment": ""}, {"id": "seed_5", "ts": "10/24/2026 9:59:31", "submitter": "Other", "team": "77360Z", "match": "", "auton": 3, "loading": 2, "scoring": 3, "toggle": 2, "driving": 3, "comment": ""}, {"id": "seed_6", "ts": "10/24/2026 10:05:25", "submitter": "Other", "team": "16329E", "match": "", "auton": 0, "loading": 3, "scoring": 1, "toggle": 0, "driving": 1, "comment": "Tipped over"}, {"id": "seed_7", "ts": "10/24/2026 10:09:41", "submitter": "Other", "team": "77786C", "match": "", "auton": 1, "loading": 1, "scoring": 2, "toggle": 0, "driving": 2, "comment": ""}, {"id": "seed_8", "ts": "10/24/2026 10:09:44", "submitter": "Andrew", "team": "77786C", "match": "", "auton": 1, "loading": 3, "scoring": 3, "toggle": 2, "driving": 2, "comment": ""}, {"id": "seed_9", "ts": "10/24/2026 10:14:45", "submitter": "Andrew", "team": "1412J", "match": "", "auton": 4, "loading": 5, "scoring": 5, "toggle": 5, "driving": 5, "comment": ""}, {"id": "seed_10", "ts": "10/24/2026 10:14:57", "submitter": "Other", "team": "1412J", "match": "", "auton": 3, "loading": 5, "scoring": 5, "toggle": 4, "driving": 4, "comment": "Can stack 6 levels"}, {"id": "seed_11", "ts": "10/24/2026 10:21:01", "submitter": "Other", "team": "19713N", "match": "", "auton": 0, "loading": 3, "scoring": 3, "toggle": 3, "driving": 4, "comment": ""}, {"id": "seed_12", "ts": "10/24/2026 10:29:54", "submitter": "Other", "team": "1412E", "match": "", "auton": 0, "loading": 0, "scoring": 0, "toggle": 0, "driving": 2, "comment": ""}];
+    // App Configuration: Overridable via URL parameters (?rtdb=...&formAction=...&team=...) or window.VEX_CONFIG
+    const urlParams = new URLSearchParams(window.location.search);
+    const RTDB_URL = urlParams.get("rtdb") !== null ? urlParams.get("rtdb") : ((window.VEX_CONFIG && window.VEX_CONFIG.rtdbUrl) || "https://my-project-1524591195518-default-rtdb.firebaseio.com/vex_33111c");
+    const GOOGLE_FORM_ACTION = urlParams.get("formAction") || (window.VEX_CONFIG && window.VEX_CONFIG.formAction) || "https://docs.google.com/forms/d/e/1FAIpQLSdlbTvRMU5SlK8_s6CMRP4T-P81t9GK377rp7HSCfsLWKmFVg/formResponse";
+    const DEFAULT_FOCUS_TEAM = urlParams.get("team") || "33111C";
+
+    // Build lookup of team number -> team name & exact Google Form dropdown option
+    const TEAM_NAMES = {"33111C": "Team 33111C"};
+    const TEAM_FORM_EXACT = {};
+    FORM_TEAM_OPTIONS.forEach(opt => {
+      const parts = opt.split(/\s{2,}/);
+      const num = parts[0].trim();
+      TEAM_NAMES[num] = parts[1] ? parts[1].trim() : "";
+      TEAM_FORM_EXACT[num] = opt;
+    });
+
+    // Collect all unique teams across schedule + form
+    const ALL_TEAMS_SET = new Set(["33111C", ... Object.keys(TEAM_NAMES)]);
+    DEFAULT_MATCHES.forEach(m => {
+      [m.red1, m.red2, m.blue1, m.blue2].forEach(t => ALL_TEAMS_SET.add(t.replace("*", "")));
+    });
+    const ALL_TEAMS = Array.from(ALL_TEAMS_SET).sort();
+
+    // App State
+    let state = {
+      focusTeam: urlParams.get("team") || localStorage.getItem("vex_focus_team") || DEFAULT_FOCUS_TEAM,
+      submitter: localStorage.getItem("vex_submitter") || "Andrew",
+      fieldFilter: "ALL",
+      delayMinutes: 0,
+      matchDelays: JSON.parse(localStorage.getItem("vex_match_delays") || "{}"),
+      onFieldMatchNum: 21,
+      matches: JSON.parse(localStorage.getItem("vex_custom_matches") || "null") || DEFAULT_MATCHES,
+      scores: JSON.parse(localStorage.getItem("vex_scores") || "{}"),
+      scouting: JSON.parse(localStorage.getItem("vex_scouting") || "null") || {}
+    };
+
+    // Seed initial 12 Google Form responses if not present
+    SEED_SCOUTING.forEach(item => {
+      if (!state.scouting[item.id]) state.scouting[item.id] = item;
+    });
+
+    let currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
+
+    // Mandatory fallback for browsers without <dialog closedby> support (modern-web-guidance: light-dismiss-a-dialog)
+    document.querySelectorAll('dialog').forEach((dialog) => {
+      if (!('closedBy' in HTMLDialogElement.prototype)) {
+        dialog.addEventListener('click', (event) => {
+          if (event.target !== dialog) return;
+          const rect = dialog.getBoundingClientRect();
+          const isDialogContent = (
+            rect.top <= event.clientY &&
+            event.clientY <= rect.top + rect.height &&
+            rect.left <= event.clientX &&
+            event.clientX <= rect.left + rect.width
+          );
+          if (isDialogContent) return;
+          dialog.close();
+        });
+      }
+    });
+
+    function isMatchDone(m) {
+      const sc = state.scores[m.id];
+      if (sc) {
+        const hasR = sc.red !== undefined && sc.red !== null && String(sc.red).trim() !== "";
+        const hasB = sc.blue !== undefined && sc.blue !== null && String(sc.blue).trim() !== "";
+        if (hasR || hasB || sc.done) return true;
+      }
+      return m.num < state.onFieldMatchNum;
+    }
+
+    function adjustOnField(delta) {
+      state.onFieldMatchNum = Math.max(1, Math.min(74, state.onFieldMatchNum + delta));
+      const bdg = document.getElementById("onFieldHeaderBadge");
+      if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      renderAll();
+    }
+
+    function setMatchOnFieldDirect(num) {
+      state.onFieldMatchNum = num;
+      const bdg = document.getElementById("onFieldHeaderBadge");
+      if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      renderAll();
+    }
+
+    function markMatchComplete(matchId) {
+      if (!state.scores[matchId]) state.scores[matchId] = {};
+      state.scores[matchId].done = true;
+      const num = parseInt(matchId.replace("Q",""), 10);
+      if (num >= state.onFieldMatchNum && num < 74) {
+        state.onFieldMatchNum = num + 1;
+        const bdg = document.getElementById("onFieldHeaderBadge");
+        if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      }
+      localStorage.setItem("vex_scores", JSON.stringify(state.scores));
+      saveLiveState("scores/" + matchId, state.scores[matchId]);
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      renderAll();
+    }
+
+    function cleanTeam(t) {
+      return (t || "").replace("*", "").trim();
+    }
+
+    function getTeamStats(teamNum) {
+      const clean = cleanTeam(teamNum);
+      const reports = Object.values(state.scouting).filter(r => cleanTeam(r.team) === clean);
+      if (!reports.length) return null;
+      const avg = (k) => reports.reduce((s, r) => s + Number(r[k] || 0), 0) / reports.length;
+      const a = avg("auton"), l = avg("loading"), s = avg("scoring"), t = avg("toggle"), d = avg("driving");
+      const total = a + l + s + t + d;
+      const comments = reports.map(r => r.comment).filter(Boolean);
+      return {
+        count: reports.length,
+        auton: a.toFixed(1),
+        loading: l.toFixed(1),
+        scoring: s.toFixed(1),
+        toggle: t.toFixed(1),
+        driving: d.toFixed(1),
+        total: total.toFixed(1),
+        comments,
+        reports
+      };
+    }
+
+    function parseMatchTimeMinutes(timeStr) {
+      const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!m) return 600;
+      let hr = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      const ampm = m[3].toUpperCase();
+      if (ampm === "PM" && hr !== 12) hr += 12;
+      if (ampm === "AM" && hr === 12) hr = 0;
+      return hr * 60 + min;
+    }
+
+    function formatMinutesToTime(totalMins) {
+      let mins = ((totalMins % 1440) + 1440) % 1440;
+      let hr = Math.floor(mins / 60);
+      let m = mins % 60;
+      const ampm = hr >= 12 ? "PM" : "AM";
+      hr = hr % 12 || 12;
+      return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+    }
+
+    function getMatchDelay(matchNum) {
+      if (state.matchDelays && Object.keys(state.matchDelays).length > 0) {
+        const nums = Object.keys(state.matchDelays).map(Number).sort((a,b) => a - b);
+        let active = null;
+        for (const n of nums) {
+          if (n <= matchNum) {
+            active = state.matchDelays[n];
+          } else {
+            break;
+          }
+        }
+        if (active !== null) return active;
+      }
+      return state.delayMinutes || 0;
+    }
+
+    function setMatchDelay(matchNum, delay) {
+      state.matchDelays[matchNum] = delay;
+      localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
+      saveLiveState("matchDelays/" + matchNum, delay);
+      renderAll();
+    }
+
+    function getMatchAdjustedMins(m) {
+      const base = parseMatchTimeMinutes(m.time);
+      const delay = getMatchDelay(m.num);
+      return base + delay;
+    }
+
+    function getMatchDisplayTime(m) {
+      const delay = getMatchDelay(m.num);
+      const adjMins = getMatchAdjustedMins(m);
+      const adjStr = formatMinutesToTime(adjMins);
+      if (!delay) return m.time;
+      const sign = delay > 0 ? `+${delay}m` : `${delay}m`;
+      return `${adjStr} (${sign})`;
+    }
+
+    function getDisplayTime(timeStr) {
+      if (!state.delayMinutes) return timeStr;
+      const base = parseMatchTimeMinutes(timeStr);
+      const adj = formatMinutesToTime(base + state.delayMinutes);
+      const sign = state.delayMinutes > 0 ? `+${state.delayMinutes}m` : `${state.delayMinutes}m`;
+      return `${adj} (${sign})`;
+    }
+
+    function getLunchCutoffMatchNum() {
+      if (state.customLunchMatch) return state.customLunchMatch;
+      // Fixed venue lunch start time is 11:27 AM
+      const lunchStartMins = parseMatchTimeMinutes("11:27 AM");
+      let cutoff = 40;
+      for (const m of state.matches) {
+        const estMins = getMatchAdjustedMins(m);
+        if (estMins <= lunchStartMins) {
+          cutoff = m.num;
+        } else {
+          break;
+        }
+      }
+      return cutoff;
+    }
+
+    function getLunchBreakHtml() {
+      const cutoff = getLunchCutoffMatchNum();
+      const cutoffDelay = getMatchDelay(cutoff);
+      const matchesAway = cutoff - state.onFieldMatchNum;
+      let statusStr = "";
+      if (state.onFieldMatchNum > cutoff) {
+        statusStr = " • Passed";
+      } else if (matchesAway <= 0) {
+        statusStr = " • 🟢 HAPPENING NOW!";
+      } else {
+        statusStr = ` • in ${matchesAway} matches (Stops after Q${cutoff})`;
+      }
+      const delayInfo = cutoffDelay !== 0 ? ` [Stops after Q${cutoff} due to ${cutoffDelay > 0 ? '+' : ''}${cutoffDelay}m delay]` : ' [Stops after Q40]';
+      return `<div class="break-banner">🍔 Lunch Break (11:27 AM – 12:15 PM)${delayInfo}${statusStr}</div>`;
+    }
+
+    function renderTeamChip(rawTeam, matchId) {
+      const num = cleanTeam(rawTeam);
+      const isFocus = num === state.focusTeam;
+      const name = TEAM_NAMES[num] || "";
+      const stats = getTeamStats(num);
+      let badgeHtml = `<span class="scout-badge" style="opacity:0.65;">🔭</span>`;
+      if (stats) {
+        const tot = parseFloat(stats.total);
+        const cls = tot >= 18 ? "high" : (tot <= 8 ? "warn" : "");
+        badgeHtml = `<span class="scout-badge ${cls}">★ ${stats.total}</span>`;
+      }
+      return `
+        <button type="button" class="team-chip ${isFocus ? 'focus-team' : ''}" onclick="openScoutModal('${num}', '${matchId}')" title="${rawTeam}: ${name}">
+          <div class="team-chip-left">
+            <div class="team-num">
+              <span>${rawTeam}${isFocus ? '★' : ''}</span>
+              ${name ? `<span class="team-name-inline">${name}</span>` : ''}
+            </div>
+          </div>
+          ${badgeHtml}
+        </button>
+      `;
+    }
+
+    function renderMatchCard(m, showTurnaroundPrev) {
+      const teams = [cleanTeam(m.red1), cleanTeam(m.red2), cleanTeam(m.blue1), cleanTeam(m.blue2)];
+      const isOur = teams.includes(state.focusTeam);
+      let station = "";
+      let allianceColor = "";
+      if (cleanTeam(m.red1) === state.focusTeam) { station = "RED 1"; allianceColor = "red"; }
+      else if (cleanTeam(m.red2) === state.focusTeam) { station = "RED 2"; allianceColor = "red"; }
+      else if (cleanTeam(m.blue1) === state.focusTeam) { station = "BLUE 1"; allianceColor = "blue"; }
+      else if (cleanTeam(m.blue2) === state.focusTeam) { station = "BLUE 2"; allianceColor = "blue"; }
+
+      const sc = state.scores[m.id] || {};
+      const hasRed = sc.red !== undefined && sc.red !== null && String(sc.red).trim() !== "";
+      const hasBlue = sc.blue !== undefined && sc.blue !== null && String(sc.blue).trim() !== "";
+      const isDone = isMatchDone(m);
+      const isOnField = state.onFieldMatchNum === m.num;
+
+      let extraTop = "";
+      if (showTurnaroundPrev) {
+        const gapMatches = m.num - showTurnaroundPrev.num;
+        const gapMins = parseMatchTimeMinutes(m.time) - parseMatchTimeMinutes(showTurnaroundPrev.time);
+        if (gapMins <= 12) {
+          extraTop += `<div class="turnaround-alert">⚡ Tight Turnaround: Only ${gapMins} mins (${gapMatches - 1} matches) after ${showTurnaroundPrev.id}! Check battery & bumper color!</div>`;
+        }
+        const cutoff = getLunchCutoffMatchNum();
+        if (showTurnaroundPrev.num <= cutoff && m.num > cutoff) {
+          extraTop += getLunchBreakHtml();
+        }
+      }
+
+      return `
+        ${extraTop}
+        <article class="match-card ${isOur ? 'our-match our-' + allianceColor : ''} ${isDone ? 'completed' : ''} ${isOnField ? 'on-field' : ''}">
+          <div class="match-top">
+            <div class="match-id-group">
+              <span class="match-id">${m.id}</span>
+              <span class="match-time" onclick="openScoreModal('${m.id}')" style="cursor:pointer;" title="Tap to adjust start time">${getMatchDisplayTime(m)}</span>
+              ${isOnField ? '<span class="next-label" style="background:#16a34a;color:#fff;">🟢 ON FIELD</span>' : ''}
+            </div>
+            <div class="badge-group">
+              <span class="field-badge">${m.field}</span>
+              ${station ? `<span class="station-badge ${allianceColor}">${station}</span>` : ''}
+            </div>
+          </div>
+
+          <div class="alliances-grid">
+            <div class="alliance-box red">
+              <div class="alliance-header">
+                <span>🔴 Red</span>
+                <span class="score-pill ${hasRed ? 'has-score' : ''}" onclick="openScoreModal('${m.id}')">${hasRed ? sc.red : 'Score'}</span>
+              </div>
+              ${renderTeamChip(m.red1, m.id)}
+              ${renderTeamChip(m.red2, m.id)}
+            </div>
+
+            <div class="alliance-box blue">
+              <div class="alliance-header">
+                <span>🔵 Blue</span>
+                <span class="score-pill ${hasBlue ? 'has-score' : ''}" onclick="openScoreModal('${m.id}')">${hasBlue ? sc.blue : 'Score'}</span>
+              </div>
+              ${renderTeamChip(m.blue1, m.id)}
+              ${renderTeamChip(m.blue2, m.id)}
+            </div>
+          </div>
+
+          <div class="match-footer">
+            <span style="font-size:0.72rem;">${isDone ? '✅ Finished' : (isOnField ? '🟢 Playing on field now' : 'Upcoming')}</span>
+            <div style="display:flex;gap:5px;">
+              <button type="button" class="mini-btn" onclick="setMatchOnFieldDirect(${m.num})">${isOnField ? '🟢 On Field' : '📍 Mark On Field'}</button>
+              <button type="button" class="mini-btn" onclick="openScoreModal('${m.id}')">${(hasRed || hasBlue) ? '✏️ Edit Score (' + (hasRed ? sc.red : '?') + '-' + (hasBlue ? sc.blue : '?') + ')' : '✏️ Enter Score'}</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderMyTeamView() {
+      document.getElementById("headerTeamBadge").textContent = state.focusTeam;
+      const myMatches = state.matches.filter(m =>
+        [cleanTeam(m.red1), cleanTeam(m.red2), cleanTeam(m.blue1), cleanTeam(m.blue2)].includes(state.focusTeam)
+      );
+      document.getElementById("myCountLabel").textContent = myMatches.length;
+
+      // Determine next unplayed match for focusTeam
+      const nextMatch = myMatches.find(m => !isMatchDone(m)) || myMatches[myMatches.length - 1];
+
+      const nextContainer = document.getElementById("nextUpContainer");
+      if (nextMatch) {
+        const isRed = [cleanTeam(nextMatch.red1), cleanTeam(nextMatch.red2)].includes(state.focusTeam);
+        const station = cleanTeam(nextMatch.red1) === state.focusTeam ? "RED 1" :
+                        cleanTeam(nextMatch.red2) === state.focusTeam ? "RED 2" :
+                        cleanTeam(nextMatch.blue1) === state.focusTeam ? "BLUE 1" : "BLUE 2";
+        const partner = isRed
+          ? (cleanTeam(nextMatch.red1) === state.focusTeam ? cleanTeam(nextMatch.red2) : cleanTeam(nextMatch.red1))
+          : (cleanTeam(nextMatch.blue1) === state.focusTeam ? cleanTeam(nextMatch.blue2) : cleanTeam(nextMatch.blue1));
+        const opp1 = isRed ? cleanTeam(nextMatch.blue1) : cleanTeam(nextMatch.red1);
+        const opp2 = isRed ? cleanTeam(nextMatch.blue2) : cleanTeam(nextMatch.red2);
+        const matchesAway = Math.max(0, nextMatch.num - state.onFieldMatchNum);
+
+        nextContainer.innerHTML = `
+          <div class="next-banner">
+            <div class="next-header">
+              <span class="next-label">🔥 NEXT FOR ${state.focusTeam}</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span class="next-eta">${matchesAway === 0 ? '🟢 ON FIELD NOW!' : matchesAway + ' matches away (Q' + state.onFieldMatchNum + ' on field)'}</span>
+                <button type="button" class="mini-btn" style="background:#16a34a;color:#fff;border-color:#16a34a;font-weight:700;" onclick="markMatchComplete('${nextMatch.id}')">✓ Mark Q${nextMatch.num} Done</button>
+              </div>
+            </div>
+            <div class="next-main">
+              <div class="next-match-title" onclick="openScoreModal('${nextMatch.id}')" style="cursor:pointer;" title="Tap to adjust timing">${nextMatch.id} • ${getMatchDisplayTime(nextMatch)} ✏️</div>
+              <div class="badge-group">
+                <span class="field-badge">${nextMatch.field}</span>
+                <span class="station-badge ${isRed ? 'red' : 'blue'}">${station}</span>
+              </div>
+            </div>
+            <div style="font-size:0.8rem; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;">
+              <span>🤝 Partner: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openScoutModal('${partner}','${nextMatch.id}')">${partner} ${TEAM_NAMES[partner] || ''}</strong></span>
+              <span>⚔️ Vs: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openScoutModal('${opp1}','${nextMatch.id}')">${opp1}</strong> & <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openScoutModal('${opp2}','${nextMatch.id}')">${opp2}</strong></span>
+            </div>
+          </div>
+        `;
+      } else {
+        nextContainer.innerHTML = "";
+      }
+
+      let html = "";
+      myMatches.forEach((m, idx) => {
+        html += renderMatchCard(m, idx > 0 ? myMatches[idx - 1] : null);
+      });
+      document.getElementById("myMatchesList").innerHTML = html || "<p>No matches found for this team.</p>";
+    }
+
+    function renderAllMatches() {
+      const q = (document.getElementById("matchSearchInput").value || "").trim().toLowerCase();
+      const filtered = state.matches.filter(m => {
+        if (state.fieldFilter !== "ALL" && m.field !== state.fieldFilter) return false;
+        if (!q) return true;
+        const teams = [m.red1, m.red2, m.blue1, m.blue2].map(cleanTeam);
+        const names = teams.map(t => (TEAM_NAMES[t] || "").toLowerCase());
+        return m.id.toLowerCase().includes(q) ||
+               teams.some(t => t.toLowerCase().includes(q)) ||
+               names.some(n => n.includes(q));
+      });
+      let html = "";
+      const cutoff = getLunchCutoffMatchNum();
+      filtered.forEach(m => {
+        if (m.num === (cutoff + 1) && state.fieldFilter === "ALL" && !q) {
+          html += getLunchBreakHtml();
+        }
+        html += renderMatchCard(m, null);
+      });
+      document.getElementById("allMatchesList").innerHTML = html;
+    }
+
+    function renderPickList() {
+      const q = (document.getElementById("scoutSearchInput").value || "").trim().toLowerCase();
+      document.getElementById("scoutCountLabel").textContent = Object.keys(state.scouting).length;
+
+      const rows = ALL_TEAMS.map(team => {
+        const stats = getTeamStats(team);
+        return {
+          team,
+          name: TEAM_NAMES[team] || "",
+          stats,
+          totalNum: stats ? parseFloat(stats.total) : -1
+        };
+      }).filter(item => {
+        if (!q) return true;
+        const notes = item.stats ? item.stats.comments.join(" ").toLowerCase() : "";
+        return item.team.toLowerCase().includes(q) || item.name.toLowerCase().includes(q) || notes.includes(q);
+      }).sort((a, b) => b.totalNum - a.totalNum || a.team.localeCompare(b.team));
+
+      const tbody = document.getElementById("pickListBody");
+      tbody.innerHTML = rows.map(r => {
+        const st = r.stats;
+        return `
+          <tr onclick="openScoutModal('${r.team}')" style="cursor:pointer;">
+            <th>
+              <div>${r.team} <span style="font-weight:500;color:var(--muted);font-size:0.75rem;">${r.name}</span></div>
+              <button type="button" class="mini-btn" onclick="event.stopPropagation(); setFocusTeam('${r.team}'); switchTab('my')">📅 Schedule</button>
+            </th>
+            <td>${st ? `<strong style="color:light-dark(#15803d, #86efac);font-size:0.95rem;">★ ${st.total}</strong> <span style="color:var(--muted)">/ 25</span>` : '<span style="color:var(--muted)">Unscouted</span>'}</td>
+            <td>${st ? `A:${st.auton} • L:${st.loading} • S:${st.scoring}` : '-'}</td>
+            <td>${st ? `T:${st.toggle} • D:${st.driving}` : '-'}</td>
+            <td>${st ? `<strong>${st.count}x</strong> ${st.comments.length ? '💬 ' + st.comments.join('; ') : ''}` : '<span style="color:var(--accent)">+ Tap to Scout</span>'}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderAll() {
+      renderMyTeamView();
+      renderAllMatches();
+      renderPickList();
+    }
+
+    function switchTab(tab) {
+      ["my", "all", "scout"].forEach(t => {
+        document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
+        document.getElementById("nav-" + t).classList.toggle("active", t === tab);
+      });
+    }
+
+    function setFocusTeam(team) {
+      state.focusTeam = team;
+      localStorage.setItem("vex_focus_team", team);
+      document.getElementById("focusTeamSelect").value = team;
+      renderAll();
+    }
+
+    function setFieldFilter(field) {
+      state.fieldFilter = field;
+      ["ALL", "Field A", "Field B", "Field C"].forEach(f => {
+        document.getElementById("fieldBtn-" + f).classList.toggle("active", f === field);
+      });
+      renderAllMatches();
+    }
+
+    function adjustDelay(delta) {
+      const matchNum = state.onFieldMatchNum || 1;
+      const currentDelay = getMatchDelay(matchNum);
+      const newDelay = currentDelay + delta;
+      setMatchDelay(matchNum, newDelay);
+      state.delayMinutes = newDelay;
+      const lbl = newDelay === 0 ? "On Time" : (newDelay > 0 ? `+${newDelay}m Delay` : `${newDelay}m Ahead`);
+      document.getElementById("delayLabel").textContent = lbl;
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum, lunchAfterMatch: state.lunchAfterMatch || 40 });
+      renderAll();
+    }
+
+    // Scouting Modal Logic
+    function initRatingRows() {
+      document.querySelectorAll(".rating-row").forEach(row => {
+        const field = row.getAttribute("data-field");
+        row.innerHTML = [0, 1, 2, 3, 4, 5].map(val => `
+          <button type="button" class="rate-btn ${currentRatings[field] === val ? 'selected' : ''}" onclick="setRating('${field}', ${val})">${val}</button>
+        `).join("");
+      });
+    }
+
+    function setRating(field, val) {
+      currentRatings[field] = val;
+      initRatingRows();
+    }
+
+    function selectSubmitter(name) {
+      state.submitter = name;
+      localStorage.setItem("vex_submitter", name);
+      document.querySelectorAll("#submitterPills .sub-pill").forEach(btn => {
+        btn.classList.toggle("selected", btn.textContent === name);
+      });
+    }
+
+    function renderTeamHistoryInModal(teamNum) {
+      const clean = cleanTeam(teamNum);
+      const stats = getTeamStats(clean);
+      const container = document.getElementById("teamExistingReports");
+      if (!stats) {
+        container.innerHTML = `<div class="comment-item" style="color:var(--muted)">No scouting reports yet for <strong>${clean} ${TEAM_NAMES[clean] || ''}</strong>. Be the first!</div>`;
+        return;
+      }
+      container.innerHTML = `
+        <div class="comment-item" style="border-color:var(--gold-border);">
+          <div style="display:flex;justify-content:space-between;font-weight:800;margin-bottom:4px;">
+            <span>${clean} ${TEAM_NAMES[clean] || ''} (${stats.count} report${stats.count > 1 ? 's' : ''})</span>
+            <span style="color:light-dark(#15803d, #86efac);">Avg: ★ ${stats.total} / 25</span>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px;">
+            Auton: <strong>${stats.auton}</strong> • Load: <strong>${stats.loading}</strong> • Score: <strong>${stats.scoring}</strong> • Toggle: <strong>${stats.toggle}</strong> • Drive: <strong>${stats.driving}</strong>
+          </div>
+          ${stats.reports.map(r => `
+            <div style="border-top:1px solid var(--border);padding-top:4px;margin-top:4px;font-size:0.74rem;">
+              <strong>${r.submitter}</strong> ${r.match ? `(${r.match})` : ''}: [${r.auton}/${r.loading}/${r.scoring}/${r.toggle}/${r.driving}] ${r.comment ? `— <em>"${r.comment}"</em>` : ''}
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function openScoutModal(teamNum, matchId) {
+      const sel = document.getElementById("scoutTeamSelect");
+      const targetTeam = cleanTeam(teamNum) || state.focusTeam;
+      sel.value = targetTeam;
+      document.getElementById("scoutMatchInput").value = matchId || "";
+      document.getElementById("scoutCommentInput").value = "";
+      selectSubmitter(state.submitter);
+      initRatingRows();
+      renderTeamHistoryInModal(targetTeam);
+      document.getElementById("scoutDialog").showModal();
+    }
+
+    async function submitScoutReport(e) {
+      e.preventDefault();
+      const team = document.getElementById("scoutTeamSelect").value;
+      const match = document.getElementById("scoutMatchInput").value.trim();
+      const comment = document.getElementById("scoutCommentInput").value.trim();
+      const id = "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+      const entry = {
+        id,
+        ts: new Date().toLocaleString(),
+        submitter: state.submitter,
+        team,
+        match,
+        auton: currentRatings.auton,
+        loading: currentRatings.loading,
+        scoring: currentRatings.scoring,
+        toggle: currentRatings.toggle,
+        driving: currentRatings.driving,
+        comment
+      };
+
+      state.scouting[id] = entry;
+      localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
+      renderAll();
+      document.getElementById("scoutDialog").close();
+
+      // 1. Save to Firebase Realtime Database for instant team sync
+      saveLiveState("scouting/" + id, entry);
+
+      // 2. Also submit directly to the team's Google Form (RECF 10/24 Scouting Form)
+      try {
+        const formData = new URLSearchParams();
+        formData.append("entry.458463111", state.submitter);
+        formData.append("entry.1603355979", TEAM_FORM_EXACT[team] || team);
+        if (match) formData.append("entry.149974184", match);
+        formData.append("entry.1562660712", String(entry.auton));
+        formData.append("entry.1665007477", String(entry.loading));
+        formData.append("entry.1623910075", String(entry.scoring));
+        formData.append("entry.153495163", String(entry.toggle));
+        formData.append("entry.1220642473", String(entry.driving));
+        if (comment) formData.append("entry.51037885", comment);
+        fetch(GOOGLE_FORM_ACTION, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: formData.toString()
+        });
+      } catch (err) {
+        console.warn("Google Form background post warning:", err);
+      }
+    }
+
+    // Score Modal & Match Timing
+    let currentScoreMatchNum = null;
+
+    function openScoreModal(matchId) {
+      document.getElementById("scoreMatchId").value = matchId;
+      document.getElementById("scoreDialogTitle").textContent = `Match ${matchId} Score & Timing`;
+      const num = parseInt(matchId.replace("Q",""), 10);
+      currentScoreMatchNum = num;
+      document.getElementById("timeAdjustMatchLabel").textContent = matchId;
+
+      const sc = state.scores[matchId] || {};
+      document.getElementById("redScoreInput").value = sc.red !== undefined ? sc.red : "";
+      document.getElementById("blueScoreInput").value = sc.blue !== undefined ? sc.blue : "";
+
+      updateScoreModalTimeDisplay();
+      document.getElementById("scoreDialog").showModal();
+    }
+
+    function updateScoreModalTimeDisplay() {
+      if (!currentScoreMatchNum) return;
+      const m = state.matches.find(item => item.num === currentScoreMatchNum);
+      if (!m) return;
+      const delay = getMatchDelay(currentScoreMatchNum);
+      const adjMins = getMatchAdjustedMins(m);
+      document.getElementById("matchEstTimeDisplay").textContent = formatMinutesToTime(adjMins);
+      document.getElementById("matchDelayBadge").textContent = (delay >= 0 ? `+${delay}m` : `${delay}m`);
+
+      const now = new Date();
+      let hr = now.getHours();
+      const min = now.getMinutes();
+      const ampm = hr >= 12 ? "PM" : "AM";
+      hr = hr % 12 || 12;
+      const nowStr = `${hr}:${String(min).padStart(2, "0")} ${ampm}`;
+      const nowSpan = document.getElementById("clockNowSpan");
+      if (nowSpan) nowSpan.textContent = nowStr;
+    }
+
+    function stepCurrentMatchDelay(deltaMinutes) {
+      if (!currentScoreMatchNum) return;
+      const currentDelay = getMatchDelay(currentScoreMatchNum);
+      const newDelay = currentDelay + deltaMinutes;
+      setMatchDelay(currentScoreMatchNum, newDelay);
+      updateScoreModalTimeDisplay();
+    }
+
+    function syncCurrentMatchToClock() {
+      if (!currentScoreMatchNum) return;
+      const m = state.matches.find(item => item.num === currentScoreMatchNum);
+      if (!m) return;
+      const now = new Date();
+      const nowMins = now.getHours() * 60 + now.getMinutes();
+      const baseMins = parseMatchTimeMinutes(m.time);
+      const newDelay = nowMins - baseMins;
+      setMatchDelay(currentScoreMatchNum, newDelay);
+      updateScoreModalTimeDisplay();
+    }
+
+    function resetCurrentMatchDelay() {
+      if (!currentScoreMatchNum) return;
+      if (state.matchDelays[currentScoreMatchNum] !== undefined) {
+        delete state.matchDelays[currentScoreMatchNum];
+        localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
+        try {
+          fetch(`${RTDB_URL}/matchDelays/${currentScoreMatchNum}.json`, { method: "DELETE" });
+        } catch(e) {}
+      }
+      renderAll();
+      updateScoreModalTimeDisplay();
+    }
+
+    function saveMatchScore(e) {
+      e.preventDefault();
+      const matchId = document.getElementById("scoreMatchId").value;
+      const red = document.getElementById("redScoreInput").value.trim();
+      const blue = document.getElementById("blueScoreInput").value.trim();
+      state.scores[matchId] = { red, blue, done: (red !== "" || blue !== "") };
+      const num = parseInt(matchId.slice(1), 10);
+      if (num >= state.onFieldMatchNum && num < 74) {
+        state.onFieldMatchNum = num + 1;
+        const bdg = document.getElementById("onFieldHeaderBadge");
+        if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      }
+      localStorage.setItem("vex_scores", JSON.stringify(state.scores));
+      saveLiveState("scores/" + matchId, state.scores[matchId]);
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      document.getElementById("scoreDialog").close();
+      renderAll();
+    }
+
+    function setMatchOnField() {
+      const matchId = document.getElementById("scoreMatchId").value;
+      state.onFieldMatchNum = parseInt(matchId.slice(1), 10);
+      const bdg = document.getElementById("onFieldHeaderBadge");
+      if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      document.getElementById("scoreDialog").close();
+      renderAll();
+    }
+
+    // Share & QR Modal
+    function openShareModal() {
+      const url = window.location.origin;
+      const qrBox = document.getElementById("qrContainer");
+      qrBox.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}" alt="QR Code for ${url}" width="200" height="200" style="display:block;" />`;
+      document.getElementById("shareDialog").showModal();
+    }
+
+    function shareLinkNative() {
+      if (navigator.share) {
+        navigator.share({
+          title: "Team 33111C VEX Schedule & Live Scouting",
+          text: "Live match schedule & scouting for Team 33111C",
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Link copied to clipboard!");
+      }
+    }
+
+    // Export Scouting to CSV
+    function exportScoutingCSV() {
+      const rows = [["Timestamp", "Submitter", "Team", "Team Name", "Match", "Auton", "Match Loading", "Scoring", "Toggle Mech", "Driving", "Total (/25)", "Comment"]];
+      Object.values(state.scouting).forEach(r => {
+        const tot = Number(r.auton||0) + Number(r.loading||0) + Number(r.scoring||0) + Number(r.toggle||0) + Number(r.driving||0);
+        rows.push([
+          r.ts || "", r.submitter || "", r.team || "", TEAM_NAMES[r.team] || "", r.match || "",
+          r.auton, r.loading, r.scoring, r.toggle, r.driving, tot,
+          `"${(r.comment || "").replace(/"/g, '""')}"`
+        ]);
+      });
+      const csv = rows.map(r => r.join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "vex_33111c_scouting.csv";
+      a.click();
+    }
+
+    // Future Tournament Loader from Google Sheet
+    async function loadCustomTournamentSheet() {
+      const input = document.getElementById("customSheetInput").value.trim();
+      if (!input) return;
+      const m = input.match(/\/d\/([a-zA-Z0-9-_]+)/);
+      const sheetId = m ? m[1] : input;
+      try {
+        const res = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`);
+        const txt = await res.text();
+        const jsonStr = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1);
+        const data = JSON.parse(jsonStr);
+        const parsed = [];
+        data.table.rows.forEach((r, idx) => {
+          const c = (i) => (r.c && r.c[i] && (r.c[i].f || r.c[i].v)) ? String(r.c[i].f || r.c[i].v).trim() : "";
+          const id = c(0);
+          if (/^Q\d+/i.test(id)) {
+            parsed.push({
+              id,
+              num: parseInt(id.slice(1), 10) || (idx + 1),
+              time: c(1).replace(/^Oct \d+,\s*/i, ""),
+              field: c(2),
+              red1: c(3),
+              red2: c(4),
+              blue1: c(5),
+              blue2: c(6)
+            });
+          }
+        });
+        if (parsed.length > 0) {
+          state.matches = parsed;
+          localStorage.setItem("vex_custom_matches", JSON.stringify(parsed));
+          saveLiveState("custom_matches", parsed);
+          renderAll();
+          document.getElementById("shareDialog").close();
+          alert(`Loaded ${parsed.length} matches from Google Sheet!`);
+        } else {
+          alert("Could not find Q1..Qn rows. Make sure the Google Sheet is shared as 'Anyone with the link can view'.");
+        }
+      } catch (e) {
+        alert("Unable to fetch Sheet. Ensure sharing is set to 'Anyone with link can view'.");
+      }
+    }
+
+    // Live Firebase Realtime Database REST Sync
+    async function saveLiveState(path, payload) {
+      if (!RTDB_URL) {
+        document.getElementById("syncStatusText").textContent = "Local Storage";
+        return;
+      }
+      try {
+        await fetch(`${RTDB_URL}/${path}.json`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        document.getElementById("syncStatusText").textContent = "Synced Live";
+      } catch (e) {
+        document.getElementById("syncStatusText").textContent = "Offline Cached";
+      }
+    }
+
+    async function pullLiveState() {
+      if (!RTDB_URL) return;
+      try {
+        const res = await fetch(`${RTDB_URL}.json`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data) {
+          if (data.scouting) {
+            Object.assign(state.scouting, data.scouting);
+            localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
+          }
+          if (data.scores) {
+            Object.assign(state.scores, data.scores);
+            localStorage.setItem("vex_scores", JSON.stringify(state.scores));
+          }
+          if (data.matchDelays) {
+            Object.assign(state.matchDelays, data.matchDelays);
+            localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
+          }
+          if (data.meta) {
+            state.delayMinutes = data.meta.delayMinutes || 0;
+            state.onFieldMatchNum = data.meta.onFieldMatchNum || state.onFieldMatchNum;
+            if (data.meta.lunchAfterMatch) state.lunchAfterMatch = data.meta.lunchAfterMatch;
+            const lbl = state.delayMinutes === 0 ? "On Time" : (state.delayMinutes > 0 ? `+${state.delayMinutes}m Delay` : `${state.delayMinutes}m Ahead`);
+            document.getElementById("delayLabel").textContent = lbl;
+            const bdg = document.getElementById("onFieldHeaderBadge");
+            if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+          }
+          renderAll();
+        }
+        document.getElementById("syncStatusText").textContent = "Live Synced";
+      } catch (e) {
+        document.getElementById("syncStatusText").textContent = "Offline Mode";
+      }
+    }
+
+    // Light / Dark Theme Support (modern-web-guidance: dark-mode-toggle)
+    function getEffectiveTheme() {
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      if (meta && (meta.content === "light" || meta.content === "dark")) return meta.content;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+
+    function updateThemeBtn() {
+      const isDark = getEffectiveTheme() === "dark";
+      const btn = document.getElementById("themeToggleBtn");
+      if (btn) btn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    function toggleTheme() {
+      const current = getEffectiveTheme();
+      const next = current === "dark" ? "light" : "dark";
+      const meta = document.querySelector('meta[name="color-scheme"]');
+      if (meta) meta.content = next;
+      try {
+        localStorage.setItem("color-scheme", next);
+      } catch (e) {}
+      updateThemeBtn();
+    }
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === "color-scheme") {
+        const meta = document.querySelector('meta[name="color-scheme"]');
+        if (meta) meta.content = e.newValue || "light dark";
+        updateThemeBtn();
+      }
+    });
+
+    // Initialize Dropdowns & First Render
+    function init() {
+      updateThemeBtn();
+      const focusSel = document.getElementById("focusTeamSelect");
+      const scoutSel = document.getElementById("scoutTeamSelect");
+      const optionsHtml = ALL_TEAMS.map(t => `<option value="${t}">${t} ${TEAM_NAMES[t] ? '— ' + TEAM_NAMES[t] : ''}</option>`).join("");
+      focusSel.innerHTML = optionsHtml;
+      scoutSel.innerHTML = optionsHtml;
+      focusSel.value = state.focusTeam;
+      const bdg = document.getElementById("onFieldHeaderBadge");
+      if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+      initRatingRows();
+      renderAll();
+      pullLiveState();
+      setInterval(pullLiveState, 8000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
