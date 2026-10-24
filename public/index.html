@@ -1141,6 +1141,26 @@
       state.onFieldMatchNum = num;
       const bdg = document.getElementById("onFieldHeaderBadge");
       if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
+
+      // Automatically calculate delay and adjust start time to NOW for this match and all subsequent matches
+      const m = state.matches.find(item => item.num === num);
+      if (m && m.time) {
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+        const baseMins = parseMatchTimeMinutes(m.time);
+        const calculatedDelay = nowMins - baseMins;
+
+        state.matchDelays[num] = calculatedDelay;
+        state.delayMinutes = calculatedDelay;
+        localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
+        saveLiveState("matchDelays/" + num, calculatedDelay);
+
+        const delayLbl = document.getElementById("delayLabel");
+        if (delayLbl) {
+          delayLbl.textContent = calculatedDelay === 0 ? "On Time" : (calculatedDelay > 0 ? `+${calculatedDelay}m Delay` : `${calculatedDelay}m Ahead`);
+        }
+      }
+
       saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
       renderAll();
     }
@@ -1739,12 +1759,9 @@
 
     function setMatchOnField() {
       const matchId = document.getElementById("scoreMatchId").value;
-      state.onFieldMatchNum = parseInt(matchId.slice(1), 10);
-      const bdg = document.getElementById("onFieldHeaderBadge");
-      if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
-      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
+      const num = parseInt(matchId.replace("Q",""), 10);
+      setMatchOnFieldDirect(num);
       document.getElementById("scoreDialog").close();
-      renderAll();
     }
 
     // Share & QR Modal
