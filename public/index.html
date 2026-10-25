@@ -822,6 +822,8 @@
         <div class="brand-text">
           <div class="brand-title" id="eventTitle">TX Halloween Madness</div>
           <div class="brand-sub">
+            <span id="eventDateText" style="font-weight:600;">Oct 24, 2026</span>
+            <span>•</span>
             <span class="sync-dot" id="syncDot"></span>
             <span id="syncStatusText">Live Synced</span>
           </div>
@@ -1034,7 +1036,8 @@
       <button class="mini-btn" onclick="document.getElementById('shareDialog').close()">✕ Close</button>
     </div>
     <div style="text-align:center; padding:8px 0;">
-      <div style="font-weight:800; font-size:0.95rem; margin-bottom:6px;">https://vex-33111c.web.app</div>
+      <div style="font-weight:800; font-size:0.95rem; margin-bottom:2px;">TX Halloween Madness</div>
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:6px;">📅 <span id="shareEventDate">Oct 24, 2026</span> • https://vex-33111c.web.app</div>
       <div style="font-size:0.76rem; color:var(--muted); margin-bottom:10px;">Scan with any phone camera to open live schedule & scouting:</div>
       <div id="qrContainer" style="background:#fff; padding:12px; border-radius:12px; display:inline-block;"></div>
       <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
@@ -1083,6 +1086,7 @@
 
     // App State
     let state = {
+      eventDate: localStorage.getItem("vex_event_date") || "Oct 24, 2026",
       focusTeam: urlParams.get("team") || localStorage.getItem("vex_focus_team") || DEFAULT_FOCUS_TEAM,
       submitter: localStorage.getItem("vex_submitter") || "Andrew",
       fieldFilter: "ALL",
@@ -1816,14 +1820,18 @@
         const jsonStr = txt.substring(txt.indexOf("{"), txt.lastIndexOf("}") + 1);
         const data = JSON.parse(jsonStr);
         const parsed = [];
+        let detectedDate = "";
         data.table.rows.forEach((r, idx) => {
           const c = (i) => (r.c && r.c[i] && (r.c[i].f || r.c[i].v)) ? String(r.c[i].f || r.c[i].v).trim() : "";
           const id = c(0);
           if (/^Q\d+/i.test(id)) {
+            const rawTime = c(1);
+            const dateMatch = rawTime.match(/^([A-Za-z]+ \d+)/i);
+            if (dateMatch && !detectedDate) detectedDate = dateMatch[1];
             parsed.push({
               id,
               num: parseInt(id.slice(1), 10) || (idx + 1),
-              time: c(1).replace(/^Oct \d+,\s*/i, ""),
+              time: rawTime.replace(/^[A-Za-z]+ \d+,\s*/i, ""),
               field: c(2),
               red1: c(3),
               red2: c(4),
@@ -1833,9 +1841,18 @@
           }
         });
         if (parsed.length > 0) {
+          if (detectedDate) {
+            state.eventDate = detectedDate + ", " + new Date().getFullYear();
+            localStorage.setItem("vex_event_date", state.eventDate);
+            const dateEl = document.getElementById("eventDateText");
+            if (dateEl) dateEl.textContent = state.eventDate;
+            const shareDateEl = document.getElementById("shareEventDate");
+            if (shareDateEl) shareDateEl.textContent = state.eventDate;
+          }
           state.matches = parsed;
           localStorage.setItem("vex_custom_matches", JSON.stringify(parsed));
           saveLiveState("custom_matches", parsed);
+          saveLiveState("eventDate", state.eventDate);
           renderAll();
           document.getElementById("shareDialog").close();
           alert(`Loaded ${parsed.length} matches from Google Sheet!`);
@@ -1893,6 +1910,14 @@
             const bdg = document.getElementById("onFieldHeaderBadge");
             if (bdg) bdg.textContent = "Q" + state.onFieldMatchNum;
           }
+          if (data.eventDate) {
+            state.eventDate = data.eventDate;
+            localStorage.setItem("vex_event_date", state.eventDate);
+            const dateEl = document.getElementById("eventDateText");
+            if (dateEl) dateEl.textContent = state.eventDate;
+            const shareDateEl = document.getElementById("shareEventDate");
+            if (shareDateEl) shareDateEl.textContent = state.eventDate;
+          }
           renderAll();
         }
         document.getElementById("syncStatusText").textContent = "Live Synced";
@@ -1936,6 +1961,11 @@
     // Initialize Dropdowns & First Render
     function init() {
       updateThemeBtn();
+      const dateEl = document.getElementById("eventDateText");
+      if (dateEl && state.eventDate) dateEl.textContent = state.eventDate;
+      const shareDateEl = document.getElementById("shareEventDate");
+      if (shareDateEl && state.eventDate) shareDateEl.textContent = state.eventDate;
+
       const focusSel = document.getElementById("focusTeamSelect");
       const scoutSel = document.getElementById("scoutTeamSelect");
       const optionsHtml = ALL_TEAMS.map(t => `<option value="${t}">${t} ${TEAM_NAMES[t] ? '— ' + TEAM_NAMES[t] : ''}</option>`).join("");
