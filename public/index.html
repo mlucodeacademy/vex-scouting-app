@@ -1410,7 +1410,7 @@
       document.getElementById("myCountLabel").textContent = myMatches.length;
 
       // Determine next unplayed match for focusTeam
-      const nextMatch = myMatches.find(m => !isMatchDone(m)) || myMatches[myMatches.length - 1];
+      const nextMatch = myMatches.find(m => !isMatchDone(m));
 
       const nextContainer = document.getElementById("nextUpContainer");
       if (nextMatch) {
