@@ -869,10 +869,15 @@
           <button type="button" class="sub-pill" onclick="selectSubmitter('Roger')">Roger</button>
           <button type="button" class="sub-pill" onclick="selectSubmitter('Other')">Other</button>
         </div>
+        <div id="otherNameGroup" class="hidden" style="margin-top:8px;">
+          <input type="text" id="otherScoutNameInput" class="text-input" placeholder="Enter your name (e.g. Alex, Coach Mike) *" oninput="onOtherNameInput()" />
+          <div id="otherNameCollisionMsg" style="font-size:0.74rem; margin-top:4px; font-weight:700;"></div>
+        </div>
       </div>
       <div class="form-group">
         <label for="scoutTeamSelect">Team Number *</label>
         <select id="scoutTeamSelect" class="text-input" onchange="onScoutTeamChange()"></select>
+        <div id="scoutFormStatusBanner" style="font-size:0.74rem; margin-top:5px; font-weight:700; color:var(--muted);"></div>
       </div>
       <div class="form-group">
         <label for="scoutMatchInput">Match (e.g. Q4)</label>
@@ -951,19 +956,29 @@
       ? urlTeamParam.toUpperCase()
       : (localStorage.getItem("vex_focus_team") || "33111C");
 
+    let scoutDeviceId = localStorage.getItem("vex_scout_device_id");
+    if (!scoutDeviceId) {
+      scoutDeviceId = "dev_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 7);
+      localStorage.setItem("vex_scout_device_id", scoutDeviceId);
+    }
+
     let state = {
       currentView: "home",
       focusTeam: initialFocusTeam,
       submitter: localStorage.getItem("vex_submitter") || "Andrew",
+      customScoutName: localStorage.getItem("vex_custom_scout_name") || "",
+      scoutDeviceId,
       fieldFilter: "ALL",
       onFieldMatchNum: 1,
       matches: DEFAULT_MATCHES,
       scores: JSON.parse(localStorage.getItem("vex_scores") || "{}"),
       scouting: JSON.parse(localStorage.getItem("vex_scouting") || "null") || {},
+      scouters: JSON.parse(localStorage.getItem("vex_scouters") || "{}"),
       rankings: []
     };
 
-    let currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
+    let currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
+    let editingReportId = null;
 
     function cleanTeam(t) { return (t || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(); }
 
@@ -1096,7 +1111,12 @@
             <div style="font-size:0.75rem; color:var(--text); line-height:1.4;">
               Auton: <strong>${stats.auton}</strong> • Loading: <strong>${stats.loading}</strong> • Scoring: <strong>${stats.scoring}</strong> • Toggle: <strong>${stats.toggle}</strong> • Driving: <strong>${stats.driving}</strong>
             </div>
-            ${stats.comments.length ? '<div style="margin-top:6px; font-size:0.75rem; color:var(--muted); border-top:1px solid var(--border); padding-top:4px;">💬 ' + stats.comments.map(c => '<em>"' + c + '"</em>').join('; ') + '</div>' : ''}
+            <div style="margin-top:8px; border-top:1px solid var(--border); padding-top:6px; display:flex; flex-direction:column; gap:4px;">
+              ${stats.reports.map(r => {
+                const rTot = Number(r.auton||0) + Number(r.loading||0) + Number(r.scoring||0) + Number(r.toggle||0) + Number(r.driving||0);
+                return `<div style="font-size:0.73rem; color:var(--muted);">👤 <strong style="color:var(--text);">${r.submitter || 'Scout'}</strong>${r.match ? ' (' + r.match + ')' : ''}: <strong>${rTot}/25</strong> <span style="opacity:0.8;">[${r.auton}/${r.loading}/${r.scoring}/${r.toggle}/${r.driving}]</span>${r.comment ? ' — <em>"' + r.comment + '"</em>' : ''}</div>`;
+              }).join("")}
+            </div>
           </div>
         `;
       }
@@ -1424,6 +1444,8 @@
     }
 
     // SCOUTING MODAL LOGIC
+    const PRESET_SCOUTERS = ["andrew", "benjamin", "daniel", "kevin", "roger", "other"];
+
     function initRatingRows() {
       document.querySelectorAll(".rating-row").forEach(row => {
         const field = row.getAttribute("data-field");
@@ -1438,18 +1460,126 @@
       initRatingRows();
     }
 
+    function getEffectiveSubmitter() {
+      if (state.submitter === "Other") {
+        return (state.customScoutName || "").trim();
+      }
+      return state.submitter;
+    }
+
+    function checkOtherNameCollision(rawName) {
+      const trimmed = (rawName || "").trim();
+      const norm = trimmed.toLowerCase();
+      if (!trimmed) {
+        return { valid: false, msg: "⚠️ Please enter your name to scout under 'Other'.", color: "#dc2626" };
+      }
+      if (PRESET_SCOUTERS.includes(norm)) {
+        return { valid: false, msg: `⚠️ "${trimmed}" is a preset button above. Tap the button or add your last initial.`, color: "#dc2626" };
+      }
+      const claimed = state.scouters[norm];
+      if (claimed && claimed.deviceId && claimed.deviceId !== state.scoutDeviceId) {
+        return { valid: false, msg: `⚠️ "${trimmed}" is already used on another phone! Please add an initial (e.g. "${trimmed} L.").`, color: "#dc2626" };
+      }
+      const conflictReport = Object.values(state.scouting).find(r =>
+        (r.submitter || "").trim().toLowerCase() === norm &&
+        r.scoutDeviceId &&
+        r.scoutDeviceId !== state.scoutDeviceId
+      );
+      if (conflictReport) {
+        return { valid: false, msg: `⚠️ "${trimmed}" is already used on another phone! Please add an initial (e.g. "${trimmed} L.").`, color: "#dc2626" };
+      }
+      return { valid: true, msg: `✓ Scouting as "${trimmed}" (saved on this phone)`, color: "var(--green)" };
+    }
+
+    function onOtherNameInput() {
+      const inp = document.getElementById("otherScoutNameInput");
+      state.customScoutName = inp ? inp.value : "";
+      localStorage.setItem("vex_custom_scout_name", state.customScoutName);
+      const msgEl = document.getElementById("otherNameCollisionMsg");
+      if (msgEl) {
+        const res = checkOtherNameCollision(state.customScoutName);
+        msgEl.textContent = res.msg;
+        msgEl.style.color = res.color;
+      }
+      syncScoutFormForSelection();
+    }
+
     function selectSubmitter(name) {
       state.submitter = name;
       localStorage.setItem("vex_submitter", name);
       document.querySelectorAll("#submitterPills .sub-pill").forEach(btn => {
         btn.classList.toggle("selected", btn.textContent === name);
       });
+      const otherGroup = document.getElementById("otherNameGroup");
+      if (otherGroup) {
+        otherGroup.classList.toggle("hidden", name !== "Other");
+      }
+      if (name === "Other") {
+        const inp = document.getElementById("otherScoutNameInput");
+        if (inp) inp.value = state.customScoutName || "";
+        const msgEl = document.getElementById("otherNameCollisionMsg");
+        if (msgEl) {
+          const res = checkOtherNameCollision(state.customScoutName);
+          msgEl.textContent = res.msg;
+          msgEl.style.color = res.color;
+        }
+      }
+      syncScoutFormForSelection();
+    }
+
+    function syncScoutFormForSelection() {
+      const sel = document.getElementById("scoutTeamSelect");
+      if (!sel || !sel.value) return;
+      const selectedTeam = cleanTeam(sel.value.split(" ")[0]);
+      const effSub = getEffectiveSubmitter();
+      const bannerEl = document.getElementById("scoutFormStatusBanner");
+
+      let myPrevReport = null;
+      if (effSub) {
+        const normSub = effSub.toLowerCase();
+        const matching = Object.values(state.scouting).filter(r => {
+          if (cleanTeam(r.team) !== selectedTeam) return false;
+          if ((r.submitter || "").trim().toLowerCase() !== normSub) return false;
+          if (state.submitter === "Other" && r.scoutDeviceId && r.scoutDeviceId !== state.scoutDeviceId) return false;
+          return true;
+        });
+        if (matching.length > 0) {
+          myPrevReport = matching[matching.length - 1];
+        }
+      }
+
+      if (myPrevReport) {
+        editingReportId = myPrevReport.id;
+        currentRatings = {
+          auton: Number(myPrevReport.auton ?? 0),
+          loading: Number(myPrevReport.loading ?? 0),
+          scoring: Number(myPrevReport.scoring ?? 0),
+          toggle: Number(myPrevReport.toggle ?? 0),
+          driving: Number(myPrevReport.driving ?? 0)
+        };
+        document.getElementById("scoutCommentInput").value = myPrevReport.comment || "";
+        if (!document.getElementById("scoutMatchInput").value && myPrevReport.match) {
+          document.getElementById("scoutMatchInput").value = myPrevReport.match;
+        }
+        if (bannerEl) {
+          bannerEl.textContent = `✏️ Loaded ${effSub}'s report for ${selectedTeam}${myPrevReport.match ? ' (' + myPrevReport.match + ')' : ''}. Save to update, or change Match # to add a new report.`;
+          bannerEl.style.color = "var(--accent)";
+        }
+      } else {
+        editingReportId = null;
+        currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
+        document.getElementById("scoutCommentInput").value = "";
+        if (bannerEl) {
+          bannerEl.textContent = `🆕 Not yet scouted by ${effSub || 'you'} in this meet — tap 0–5 for each category.`;
+          bannerEl.style.color = "var(--muted)";
+        }
+      }
+      initRatingRows();
     }
 
     function onScoutTeamChange() {
-      currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
-      document.getElementById("scoutCommentInput").value = "";
-      initRatingRows();
+      document.getElementById("scoutMatchInput").value = "";
+      syncScoutFormForSelection();
     }
 
     function openScoutModal(teamNum, matchId) {
@@ -1458,25 +1588,52 @@
       const exact = FORM_TEAM_OPTIONS.find(opt => opt.startsWith(targetTeam + " ")) || targetTeam;
       sel.value = exact;
       document.getElementById("scoutMatchInput").value = matchId || "";
-      document.getElementById("scoutCommentInput").value = "";
-      currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
       selectSubmitter(state.submitter);
-      initRatingRows();
       document.getElementById("scoutDialog").showModal();
     }
 
     async function submitScoutReport(e) {
       e.preventDefault();
+      let finalSubmitter = state.submitter;
+      if (state.submitter === "Other") {
+        const check = checkOtherNameCollision(state.customScoutName);
+        if (!check.valid) {
+          alert(check.msg);
+          document.getElementById("otherScoutNameInput").focus();
+          return;
+        }
+        finalSubmitter = state.customScoutName.trim();
+        const norm = finalSubmitter.toLowerCase();
+        state.scouters[norm] = { name: finalSubmitter, deviceId: state.scoutDeviceId, updated: new Date().toLocaleString() };
+        localStorage.setItem("vex_scouters", JSON.stringify(state.scouters));
+        saveLiveState("scouters/" + encodeURIComponent(norm), state.scouters[norm]);
+      }
+
+      const missingFields = ["auton", "loading", "scoring", "toggle", "driving"].filter(f => currentRatings[f] === null || currentRatings[f] === undefined);
+      if (missingFields.length > 0) {
+        alert("Please select a score (0–5) for all 5 categories before saving!");
+        return;
+      }
+
       const rawTeamOption = document.getElementById("scoutTeamSelect").value;
       const cleanNum = cleanTeam(rawTeamOption.split(" ")[0]);
       const match = document.getElementById("scoutMatchInput").value.trim();
       const comment = document.getElementById("scoutCommentInput").value.trim();
-      const id = "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+
+      // Reuse editingReportId if updating same match (or blank match), otherwise create new entry ID
+      let id = "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+      if (editingReportId && state.scouting[editingReportId]) {
+        const prev = state.scouting[editingReportId];
+        if ((prev.match || "").toUpperCase() === match.toUpperCase()) {
+          id = editingReportId;
+        }
+      }
 
       const entry = {
         id,
         ts: new Date().toLocaleString(),
-        submitter: state.submitter,
+        submitter: finalSubmitter,
+        scoutDeviceId: state.scoutDeviceId,
         team: cleanNum,
         match,
         auton: currentRatings.auton,
@@ -1495,8 +1652,13 @@
       saveLiveState("scouting/" + id, entry);
 
       try {
+        const formSubmitter = state.submitter === "Other" ? "Other" : finalSubmitter;
+        const formComment = state.submitter === "Other"
+          ? (comment ? `[Scout: ${finalSubmitter}] ${comment}` : `[Scout: ${finalSubmitter}]`)
+          : comment;
+
         const formData = new URLSearchParams();
-        formData.append("entry.458463111", state.submitter);
+        formData.append("entry.458463111", formSubmitter);
         formData.append("entry.1603355979", rawTeamOption);
         formData.append("entry.149974184", match);
         formData.append("entry.1562660712", String(currentRatings.auton));
@@ -1504,7 +1666,7 @@
         formData.append("entry.1623910075", String(currentRatings.scoring));
         formData.append("entry.153495163", String(currentRatings.toggle));
         formData.append("entry.1220642473", String(currentRatings.driving));
-        formData.append("entry.51037885", comment);
+        formData.append("entry.51037885", formComment);
 
         await fetch(GOOGLE_FORM_ACTION, {
           method: "POST",
@@ -1540,6 +1702,10 @@
           if (data.scouting) {
             state.scouting = data.scouting;
             localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
+          }
+          if (data.scouters) {
+            state.scouters = data.scouters;
+            localStorage.setItem("vex_scouters", JSON.stringify(state.scouters));
           }
           if (data.live_event) {
             if (Array.isArray(data.live_event.matches) && data.live_event.matches.length > 0) {
