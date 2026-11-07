@@ -7,7 +7,31 @@ Token is kept secure in this environment and NEVER exposed to client browsers.
 """
 import sys, json, os, urllib.request, datetime, zoneinfo
 
-EVENT_TZ = zoneinfo.ZoneInfo("America/Chicago")
+# US State / Region to Timezone mapping
+US_REGION_TZ = {
+    # Eastern (UTC-5 in standard time)
+    "Connecticut": "America/New_York", "Delaware": "America/New_York", "Florida": "America/New_York",
+    "Georgia": "America/New_York", "Maine": "America/New_York", "Maryland": "America/New_York",
+    "Massachusetts": "America/New_York", "Michigan": "America/Detroit", "New Hampshire": "America/New_York",
+    "New Jersey": "America/New_York", "New York": "America/New_York", "North Carolina": "America/New_York",
+    "Ohio": "America/New_York", "Pennsylvania": "America/New_York", "Rhode Island": "America/New_York",
+    "South Carolina": "America/New_York", "Vermont": "America/New_York", "Virginia": "America/New_York",
+    "West Virginia": "America/New_York", "District of Columbia": "America/New_York",
+    # Central (UTC-6 in standard time)
+    "Alabama": "America/Chicago", "Arkansas": "America/Chicago", "Illinois": "America/Chicago",
+    "Iowa": "America/Chicago", "Kansas": "America/Chicago", "Louisiana": "America/Chicago",
+    "Minnesota": "America/Chicago", "Mississippi": "America/Chicago", "Missouri": "America/Chicago",
+    "Nebraska": "America/Chicago", "North Dakota": "America/Chicago", "Oklahoma": "America/Chicago",
+    "South Dakota": "America/Chicago", "Tennessee": "America/Chicago", "Texas": "America/Chicago",
+    "Wisconsin": "America/Chicago",
+    # Mountain (UTC-7 in standard time)
+    "Arizona": "America/Phoenix", "Colorado": "America/Denver", "Idaho": "America/Boise",
+    "Montana": "America/Denver", "New Mexico": "America/Denver", "Utah": "America/Denver",
+    "Wyoming": "America/Denver",
+    # Pacific & Hawaii / Alaska
+    "California": "America/Los_Angeles", "Nevada": "America/Los_Angeles", "Oregon": "America/Los_Angeles",
+    "Washington": "America/Los_Angeles", "Alaska": "America/Anchorage", "Hawaii": "America/Pacific/Honolulu"
+}
 
 def load_token():
     tok = os.environ.get("ROBOTEVENTS_TOKEN", "").strip()
@@ -30,6 +54,31 @@ def api_get(endpoint):
     req = urllib.request.Request(url, headers={"Authorization": f"Bearer {TOKEN}", "User-Agent": "VexScout-Sync/1.0"})
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())
+
+def derive_event_timezone(event_id):
+    """Derive event local timezone dynamically from event location or coordinates."""
+    try:
+        ev = api_get(f"/events/{event_id}")
+        loc = ev.get("location", {})
+        region = (loc.get("region") or "").strip()
+        if region in US_REGION_TZ:
+            tz_name = US_REGION_TZ[region]
+            print(f"[Timezone] Derived {tz_name} from event region: {region} ({loc.get('city', '')})")
+            return zoneinfo.ZoneInfo(tz_name)
+        coords = loc.get("coordinates") or {}
+        lon = coords.get("lon")
+        if lon is not None:
+            if lon > -85: tz_name = "America/New_York"
+            elif lon > -100: tz_name = "America/Chicago"
+            elif lon > -114: tz_name = "America/Denver"
+            else: tz_name = "America/Los_Angeles"
+            print(f"[Timezone] Derived {tz_name} from event longitude: {lon}")
+            return zoneinfo.ZoneInfo(tz_name)
+    except Exception as e:
+        print(f"[WARN] Could not derive timezone from event metadata: {e}")
+    return zoneinfo.ZoneInfo("America/Chicago")
+
+EVENT_TZ = derive_event_timezone(EVENT_ID)
 
 def fmt_iso_time(iso_str):
     if not iso_str:
