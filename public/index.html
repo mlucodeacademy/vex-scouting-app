@@ -96,6 +96,11 @@
     .brand-badge:active {
       transform: scale(0.96);
     }
+    .brand-text {
+      min-width: 0;
+      overflow: hidden;
+      flex: 1;
+    }
     .brand-title {
       font-size: 0.88rem;
       font-weight: 800;
@@ -125,6 +130,7 @@
       display: flex;
       gap: 6px;
       align-items: center;
+      flex-shrink: 0;
     }
     .icon-btn {
       background: var(--surface-2);
@@ -681,28 +687,9 @@
         </div>
       </div>
 
-      <div class="action-tiles">
-        <button type="button" class="action-tile" onclick="navigate('my')">
-          <span>★ My Matches (<span id="homeMyCount">6</span>)</span>
-          <span class="desc" id="homeMyDesc">33111C personal schedule & partners</span>
-        </button>
-        <button type="button" class="action-tile" onclick="navigate('all')">
-          <span>📅 All Matches (<span id="homeAllCount">53</span>)</span>
-          <span class="desc">Full schedule by Kirby & Buffalo fields</span>
-        </button>
-        <button type="button" class="action-tile" onclick="navigate('rankings')">
-          <span>🏆 Division Rankings</span>
-          <span class="desc">Official W-L-T, WP, AP, SP standings</span>
-        </button>
-        <button type="button" class="action-tile" onclick="navigate('scout')">
-          <span>🔭 Scouting & Pick List</span>
-          <span class="desc">Team ratings, tipping alerts & notes</span>
-        </button>
-      </div>
-
       <div style="font-size:0.8rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
         <span>My Upcoming Matches</span>
-        <a href="javascript:void(0)" id="homeViewAllMyLink" onclick="navigate('my')" style="color:var(--accent); text-decoration:none;">View All (6) →</a>
+        <a href="javascript:void(0)" id="homeViewAllMyLink" onclick="navigate('my')" style="color:var(--accent); text-decoration:none;">View All →</a>
       </div>
       <div id="homeMyMatchesList"></div>
     </section>
@@ -730,7 +717,7 @@
     <!-- VIEW 4: RANKINGS -->
     <section id="view-rankings" class="view-panel">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h2 style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Division Standings</h2>
+        <h2 style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Meet Rankings</h2>
         <span style="font-size:0.75rem; color:var(--muted);" id="rankingsLastSyncText">Live Synced</span>
       </div>
       <div class="table-container">
@@ -952,9 +939,11 @@
 
     // State
     const urlTeamParam = new URLSearchParams(window.location.search).get("team");
+    const savedFocusTeam = (localStorage.getItem("vex_focus_team") || "").toUpperCase();
     const initialFocusTeam = (urlTeamParam && TEAM_PROFILES[urlTeamParam.toUpperCase()])
       ? urlTeamParam.toUpperCase()
-      : (localStorage.getItem("vex_focus_team") || "33111C");
+      : (TEAM_PROFILES[savedFocusTeam] ? savedFocusTeam : "33111C");
+    localStorage.setItem("vex_focus_team", initialFocusTeam);
 
     let scoutDeviceId = localStorage.getItem("vex_scout_device_id");
     if (!scoutDeviceId) {
@@ -1330,7 +1319,8 @@
     function renderMyMatches() {
       const myMatches = state.matches.filter(m => [cleanTeam(m.red1), cleanTeam(m.red2), cleanTeam(m.blue1), cleanTeam(m.blue2)].includes(state.focusTeam));
       document.getElementById("myMatchesList").innerHTML = myMatches.map(m => renderMatchCard(m)).join("") || `<p style='color:var(--muted)'>No matches found for ${state.focusTeam}.</p>`;
-      document.getElementById("homeMyCount").textContent = myMatches.length;
+      const homeMyCountEl = document.getElementById("homeMyCount");
+      if (homeMyCountEl) homeMyCountEl.textContent = myMatches.length;
       const viewAllLink = document.getElementById("homeViewAllMyLink");
       if (viewAllLink) viewAllLink.textContent = `View All (${myMatches.length}) →`;
 
@@ -1338,17 +1328,86 @@
       document.getElementById("homeMyMatchesList").innerHTML = unplayed.map(m => renderMatchCard(m)).join("") || "<p style='color:var(--muted);font-size:0.8rem;'>All matches played!</p>";
     }
 
-    // RANKINGS VIEW
+    // RANKINGS VIEW (with client-side fallback calculation from scored matches if API rankings are 0-0-0)
+    function getEffectiveRankings() {
+      const apiRanks = state.rankings || [];
+      const apiTotalPlayed = apiRanks.reduce((acc, r) => acc + (r.wins || 0) + (r.losses || 0) + (r.ties || 0), 0);
+
+      const stats = {};
+      Object.keys(TEAM_PROFILES).forEach(tnum => {
+        stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+      });
+      apiRanks.forEach(r => {
+        const tnum = r.team ? cleanTeam(r.team.name) : "";
+        if (tnum) {
+          stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: r.ap || 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+        }
+      });
+
+      let computedPlayed = 0;
+      state.matches.forEach(m => {
+        if (!String(m.id || "").startsWith("Q")) return;
+        const sc = state.scores[m.id];
+        if (!sc) return;
+        const rs = Number(sc.red || 0);
+        const bs = Number(sc.blue || 0);
+        if (!sc.done && rs === 0 && bs === 0) return;
+        const loseScore = Math.min(rs, bs);
+        [cleanTeam(m.red1), cleanTeam(m.red2)].forEach(t => {
+          if (!t || t === "TBD" || t === "MISSING") return;
+          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+          stats[t].played++;
+          stats[t].sp += loseScore;
+          stats[t].total_points += rs;
+          stats[t].high_score = Math.max(stats[t].high_score, rs);
+          if (rs > bs) { stats[t].wins++; stats[t].wp += 2; }
+          else if (rs < bs) { stats[t].losses++; }
+          else { stats[t].ties++; stats[t].wp += 1; }
+          computedPlayed++;
+        });
+        [cleanTeam(m.blue1), cleanTeam(m.blue2)].forEach(t => {
+          if (!t || t === "TBD" || t === "MISSING") return;
+          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+          stats[t].played++;
+          stats[t].sp += loseScore;
+          stats[t].total_points += bs;
+          stats[t].high_score = Math.max(stats[t].high_score, bs);
+          if (bs > rs) { stats[t].wins++; stats[t].wp += 2; }
+          else if (bs < rs) { stats[t].losses++; }
+          else { stats[t].ties++; stats[t].wp += 1; }
+          computedPlayed++;
+        });
+      });
+
+      if (computedPlayed > apiTotalPlayed) {
+        const list = Object.values(stats).sort((a, b) => {
+          const aAvgWp = a.played ? a.wp / a.played : -1;
+          const bAvgWp = b.played ? b.wp / b.played : -1;
+          if (bAvgWp !== aAvgWp) return bAvgWp - aAvgWp;
+          if (b.wp !== a.wp) return b.wp - a.wp;
+          if (b.ap !== a.ap) return b.ap - a.ap;
+          const aAvgSp = a.played ? a.sp / a.played : -1;
+          const bAvgSp = b.played ? b.sp / b.played : -1;
+          if (bAvgSp !== aAvgSp) return bAvgSp - aAvgSp;
+          if (b.sp !== a.sp) return b.sp - a.sp;
+          return b.high_score - a.high_score;
+        });
+        return list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+      }
+
+      return [...apiRanks].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+    }
+
     function renderRankings() {
       const tbody = document.getElementById("rankingsTableBody");
       document.getElementById("homeOurRank").textContent = "#--";
       document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
 
-      if (!state.rankings || !state.rankings.length) {
+      const sortedRankings = getEffectiveRankings();
+      if (!sortedRankings.length) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Rankings will populate as tournament matches finish!</td></tr>`;
         return;
       }
-      const sortedRankings = [...state.rankings].sort((a, b) => (a.rank || 999) - (b.rank || 999));
       tbody.innerHTML = sortedRankings.map(r => {
         const teamNum = r.team ? cleanTeam(r.team.name) : "";
         const isOur = teamNum === state.focusTeam;
@@ -1364,7 +1423,7 @@
         `;
       }).join("");
 
-      const ourRankObj = state.rankings.find(r => r.team && cleanTeam(r.team.name) === state.focusTeam);
+      const ourRankObj = sortedRankings.find(r => r.team && cleanTeam(r.team.name) === state.focusTeam);
       if (ourRankObj) {
         document.getElementById("homeOurRank").textContent = "#" + ourRankObj.rank;
         document.getElementById("homeRecordSub").textContent = `Record: ${ourRankObj.wins}-${ourRankObj.losses}-${ourRankObj.ties} (${ourRankObj.wp} WP)`;

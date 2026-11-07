@@ -135,16 +135,101 @@ def sync():
             "blue2": blue_teams[1] if len(blue_teams) > 1 else "TBD"
         })
 
-        is_scored = bool(m.get("scored") or started_iso or r_score > 0 or b_score > 0)
-        if is_scored:
+        is_scored = bool(m.get("scored") or r_score > 0 or b_score > 0)
+        if is_scored or started_iso:
             latest_started_num = max(latest_started_num, seq_idx)
             scores_dict[mid] = {
                 "red": r_score,
                 "blue": b_score,
                 "scheduled": sched_str,
                 "started": started_str,
-                "done": bool(m.get("scored") or r_score > 0 or b_score > 0)
+                "done": is_scored
             }
+
+    # 5. If RobotEvents /rankings lags behind live scored matches (e.g. all 0-0-0), compute live Meet Rankings from scored Qual matches
+    api_total_played = sum((r.get("wins", 0) + r.get("losses", 0) + r.get("ties", 0)) for r in rankings)
+    team_stats = {}
+    for r in rankings:
+        t_obj = r.get("team") or {}
+        t_name = t_obj.get("name")
+        if t_name:
+            team_stats[t_name] = {
+                "team": t_obj,
+                "wins": 0,
+                "losses": 0,
+                "ties": 0,
+                "wp": 0,
+                "ap": r.get("ap", 0),
+                "sp": 0,
+                "high_score": 0,
+                "total_points": 0,
+                "played": 0
+            }
+
+    scored_qual_count = 0
+    for m in sorted_matches:
+        if m.get("round") != 2:
+            continue
+        r_al = next((a for a in m.get("alliances", []) if a.get("color") == "red"), {})
+        b_al = next((a for a in m.get("alliances", []) if a.get("color") == "blue"), {})
+        rs = r_al.get("score", 0) or 0
+        bs = b_al.get("score", 0) or 0
+        if not (m.get("scored") or rs > 0 or bs > 0):
+            continue
+        scored_qual_count += 1
+        lose_score = min(rs, bs)
+        r_teams = [(t.get("team") or {}).get("name") for t in r_al.get("teams", []) if (t.get("team") or {}).get("name")]
+        b_teams = [(t.get("team") or {}).get("name") for t in b_al.get("teams", []) if (t.get("team") or {}).get("name")]
+
+        for t_name in r_teams:
+            st = team_stats.setdefault(t_name, {"team": {"name": t_name}, "wins": 0, "losses": 0, "ties": 0, "wp": 0, "ap": 0, "sp": 0, "high_score": 0, "total_points": 0, "played": 0})
+            st["played"] += 1
+            st["sp"] += lose_score
+            st["total_points"] += rs
+            st["high_score"] = max(st["high_score"], rs)
+            if rs > bs:
+                st["wins"] += 1
+                st["wp"] += 2
+            elif rs < bs:
+                st["losses"] += 1
+            else:
+                st["ties"] += 1
+                st["wp"] += 1
+
+        for t_name in b_teams:
+            st = team_stats.setdefault(t_name, {"team": {"name": t_name}, "wins": 0, "losses": 0, "ties": 0, "wp": 0, "ap": 0, "sp": 0, "high_score": 0, "total_points": 0, "played": 0})
+            st["played"] += 1
+            st["sp"] += lose_score
+            st["total_points"] += bs
+            st["high_score"] = max(st["high_score"], bs)
+            if bs > rs:
+                st["wins"] += 1
+                st["wp"] += 2
+            elif bs < rs:
+                st["losses"] += 1
+            else:
+                st["ties"] += 1
+                st["wp"] += 1
+
+    computed_total_played = sum(st["played"] for st in team_stats.values())
+    if computed_total_played > api_total_played:
+        sorted_computed = sorted(
+            team_stats.values(),
+            key=lambda x: (
+                x["wp"] / x["played"] if x["played"] else -1,
+                x["wp"],
+                x["ap"],
+                x["sp"] / x["played"] if x["played"] else -1,
+                x["sp"],
+                x["high_score"],
+                x["total_points"]
+            ),
+            reverse=True
+        )
+        rankings = []
+        for idx, item in enumerate(sorted_computed, start=1):
+            item["rank"] = idx
+            rankings.append(item)
 
     # Push to Firebase RTDB
     payload = {
