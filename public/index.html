@@ -681,7 +681,7 @@
           <div class="stat-card-sub" id="homeDelaySub">Schedule on time</div>
         </div>
         <div class="stat-card" onclick="navigate('rankings')">
-          <div class="stat-card-label">🏆 Current Rank</div>
+          <div class="stat-card-label" id="homeRankLabel">🏆 Current Rank</div>
           <div class="stat-card-value" id="homeOurRank">#--</div>
           <div class="stat-card-sub" id="homeRecordSub">Record: 0-0-0</div>
         </div>
@@ -716,9 +716,15 @@
 
     <!-- VIEW 4: RANKINGS -->
     <section id="view-rankings" class="view-panel">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h2 style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Meet Rankings</h2>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <h2 style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Meet Rankings</h2>
+          <span id="rankingsSourceBadge" class="hero-badge" style="font-size:0.70rem; padding:3px 8px;">🟡 Unofficial (Live Calc)</span>
+        </div>
         <span style="font-size:0.75rem; color:var(--muted);" id="rankingsLastSyncText">Live Synced</span>
+      </div>
+      <div id="rankingsNoticeText" style="font-size:0.74rem; color:var(--muted); margin-bottom:8px;">
+        ℹ️ Calculated live from match scores while official RobotEvents rankings &amp; AP are pending publication.
       </div>
       <div class="table-container">
         <table>
@@ -963,7 +969,9 @@
       scores: JSON.parse(localStorage.getItem("vex_scores") || "{}"),
       scouting: JSON.parse(localStorage.getItem("vex_scouting") || "null") || {},
       scouters: JSON.parse(localStorage.getItem("vex_scouters") || "{}"),
-      rankings: []
+      rankings: [],
+      officialRankings: [],
+      rankingsOfficial: false
     };
 
     let currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
@@ -1328,19 +1336,21 @@
       document.getElementById("homeMyMatchesList").innerHTML = unplayed.map(m => renderMatchCard(m)).join("") || "<p style='color:var(--muted);font-size:0.8rem;'>All matches played!</p>";
     }
 
-    // RANKINGS VIEW (with client-side fallback calculation from scored matches if API rankings are 0-0-0)
+    // RANKINGS VIEW (marks Official vs Unofficial based on whether RobotEvents server rankings are caught up)
     function getEffectiveRankings() {
-      const apiRanks = state.rankings || [];
-      const apiTotalPlayed = apiRanks.reduce((acc, r) => acc + (r.wins || 0) + (r.losses || 0) + (r.ties || 0), 0);
+      const officialRanks = (state.officialRankings && state.officialRankings.length)
+        ? state.officialRankings
+        : (state.rankings || []).filter(r => r.is_official);
+      const apiTotalPlayed = officialRanks.reduce((acc, r) => acc + (r.wins || 0) + (r.losses || 0) + (r.ties || 0), 0);
 
       const stats = {};
       Object.keys(TEAM_PROFILES).forEach(tnum => {
-        stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+        stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0, is_official: false };
       });
-      apiRanks.forEach(r => {
+      officialRanks.forEach(r => {
         const tnum = r.team ? cleanTeam(r.team.name) : "";
         if (tnum) {
-          stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: r.ap || 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+          stats[tnum] = { team: { name: tnum }, wins: 0, losses: 0, ties: 0, wp: 0, ap: r.ap || 0, sp: 0, high_score: 0, total_points: 0, played: 0, is_official: false };
         }
       });
 
@@ -1355,7 +1365,7 @@
         const loseScore = Math.min(rs, bs);
         [cleanTeam(m.red1), cleanTeam(m.red2)].forEach(t => {
           if (!t || t === "TBD" || t === "MISSING") return;
-          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0, is_official: false };
           stats[t].played++;
           stats[t].sp += loseScore;
           stats[t].total_points += rs;
@@ -1367,7 +1377,7 @@
         });
         [cleanTeam(m.blue1), cleanTeam(m.blue2)].forEach(t => {
           if (!t || t === "TBD" || t === "MISSING") return;
-          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0 };
+          if (!stats[t]) stats[t] = { team: { name: t }, wins: 0, losses: 0, ties: 0, wp: 0, ap: 0, sp: 0, high_score: 0, total_points: 0, played: 0, is_official: false };
           stats[t].played++;
           stats[t].sp += loseScore;
           stats[t].total_points += bs;
@@ -1378,6 +1388,13 @@
           computedPlayed++;
         });
       });
+
+      if (apiTotalPlayed >= computedPlayed && apiTotalPlayed > 0) {
+        return {
+          isOfficial: true,
+          list: [...officialRanks].sort((a, b) => (a.rank || 999) - (b.rank || 999))
+        };
+      }
 
       if (computedPlayed > apiTotalPlayed) {
         const list = Object.values(stats).sort((a, b) => {
@@ -1392,18 +1409,51 @@
           if (b.sp !== a.sp) return b.sp - a.sp;
           return b.high_score - a.high_score;
         });
-        return list.map((item, idx) => ({ ...item, rank: idx + 1 }));
+        return {
+          isOfficial: false,
+          list: list.map((item, idx) => ({ ...item, rank: idx + 1, is_official: false }))
+        };
       }
 
-      return [...apiRanks].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+      return {
+        isOfficial: Boolean(state.rankingsOfficial),
+        list: [...(state.rankings || [])].sort((a, b) => (a.rank || 999) - (b.rank || 999))
+      };
     }
 
     function renderRankings() {
       const tbody = document.getElementById("rankingsTableBody");
+      const rankLabelEl = document.getElementById("homeRankLabel");
+      const badgeEl = document.getElementById("rankingsSourceBadge");
+      const noticeEl = document.getElementById("rankingsNoticeText");
+
       document.getElementById("homeOurRank").textContent = "#--";
       document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
 
-      const sortedRankings = getEffectiveRankings();
+      const { list: sortedRankings, isOfficial } = getEffectiveRankings();
+
+      if (rankLabelEl) {
+        rankLabelEl.textContent = isOfficial ? "🏆 Current Rank (Official)" : "🏆 Current Rank (Unofficial)";
+      }
+      if (badgeEl) {
+        if (isOfficial) {
+          badgeEl.textContent = "🟢 Official (RobotEvents)";
+          badgeEl.style.background = "rgba(22, 163, 74, 0.16)";
+          badgeEl.style.color = "light-dark(#15803d, #86efac)";
+          badgeEl.style.border = "1px solid #16a34a";
+        } else {
+          badgeEl.textContent = "🟡 Unofficial (Live Calc)";
+          badgeEl.style.background = "var(--gold-bg)";
+          badgeEl.style.color = "var(--gold-text)";
+          badgeEl.style.border = "1px solid var(--gold-border)";
+        }
+      }
+      if (noticeEl) {
+        noticeEl.textContent = isOfficial
+          ? "✅ Synced with official published RobotEvents tournament standings (includes WP, AP & SP)."
+          : "ℹ️ Unofficial live calculation from match scores (AP pending official RobotEvents publication).";
+      }
+
       if (!sortedRankings.length) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Rankings will populate as tournament matches finish!</td></tr>`;
         return;
@@ -1411,13 +1461,14 @@
       tbody.innerHTML = sortedRankings.map(r => {
         const teamNum = r.team ? cleanTeam(r.team.name) : "";
         const isOur = teamNum === state.focusTeam;
+        const apDisplay = (!isOfficial && !r.ap) ? '<span style="color:var(--muted);">--</span>' : r.ap;
         return `
           <tr class="${isOur ? 'our-team-row' : ''}" onclick="openTeamDetail('${teamNum}')" style="cursor:pointer;">
             <td><strong>#${r.rank}</strong></td>
             <td><strong>${teamNum}</strong></td>
             <td>${r.wins}-${r.losses}-${r.ties}</td>
             <td><strong>${r.wp}</strong></td>
-            <td>${r.ap}</td>
+            <td>${apDisplay}</td>
             <td>${r.sp}</td>
           </tr>
         `;
@@ -1773,6 +1824,8 @@
             state.scores = data.live_event.scores || {};
             localStorage.setItem("vex_scores", JSON.stringify(state.scores));
             if (data.live_event.rankings) state.rankings = data.live_event.rankings;
+            if (data.live_event.official_rankings) state.officialRankings = data.live_event.official_rankings;
+            if (data.live_event.rankings_official !== undefined) state.rankingsOfficial = Boolean(data.live_event.rankings_official);
             if (data.live_event.onFieldMatchNum) {
               state.onFieldMatchNum = data.live_event.onFieldMatchNum;
             }

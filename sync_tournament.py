@@ -79,7 +79,10 @@ def sync():
     
     # 2. Fetch rankings (sort ascending #1 -> #N since RobotEvents API returns descending)
     rank_data = api_get(f"/events/{EVENT_ID}/divisions/1/rankings?per_page=100")
-    rankings = sorted(rank_data.get("data", []), key=lambda r: r.get("rank", 999))
+    official_rankings = sorted(rank_data.get("data", []), key=lambda r: r.get("rank", 999))
+    for r in official_rankings:
+        r["is_official"] = True
+    rankings = list(official_rankings)
 
     # 3. Fetch live event skills runs
     skills_data = api_get(f"/events/{EVENT_ID}/skills?per_page=100").get("data", [])
@@ -212,6 +215,7 @@ def sync():
                 st["wp"] += 1
 
     computed_total_played = sum(st["played"] for st in team_stats.values())
+    rankings_official = bool(api_total_played >= computed_total_played and api_total_played > 0)
     if computed_total_played > api_total_played:
         sorted_computed = sorted(
             team_stats.values(),
@@ -229,6 +233,7 @@ def sync():
         rankings = []
         for idx, item in enumerate(sorted_computed, start=1):
             item["rank"] = idx
+            item["is_official"] = False
             rankings.append(item)
 
     # Push to Firebase RTDB
@@ -239,6 +244,8 @@ def sync():
         "matches": live_matches,
         "scores": scores_dict,
         "rankings": rankings,
+        "official_rankings": official_rankings,
+        "rankings_official": rankings_official,
         "live_skills": live_skills
     }
     
