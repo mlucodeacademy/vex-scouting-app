@@ -1,130 +1,103 @@
-# 🤖 VEX Robotics Tournament Schedule & Live Scouting App
+# 🤖 VEX V5RC Live Tournament Hub & Scouting App
 
-A fast, mobile-first Progressive Web App (PWA) designed for VEX Robotics teams to track tournament match schedules, cumulative cascading match delays, match turnaround alerts, and live alliance scouting data across team members in real-time.
+A fast, mobile-first multi-page Progressive Web App (PWA) built for **VEX V5 Robotics Competition (2026–2027: Override)** teams. Combines **automated RobotEvents v2 API live syncing** (scores, rankings, schedules, elimination brackets, and skills) with **collaborative team scouting** and **interactive team dossiers**.
 
----
-
-## ✨ Features
-
-- **📱 Mobile-First PWA**: Fits iPhone & Android screens with zero horizontal overflow, installable to the home screen.
-- **⏱️ Per-Game Cascading Delays**: Adjust any match start time or click **"Set to NOW"**; delays cascade automatically forward to all subsequent matches.
-- **🍔 Dynamic Lunch Cutoff**: The fixed venue lunch window (e.g., 11:27 AM – 12:15 PM) dynamically determines which match is the last one played before the break based on current match delays.
-- **🔭 Live Collaborative Scouting**: Instant 0–5 rating buttons (Auton, Loading, Scoring, Toggle, Driving + Notes), synchronized across all team phones via Firebase Realtime Database.
-- **📋 Google Form & Sheet Integration**: Submits directly to your team's Google Form for central record keeping, and exports CSV pick-lists on demand.
-- **🌓 Native Dark & Light Mode**: Clean, high-contrast theme toggle powered by native CSS `light-dark()`.
-- **🔄 Tournament Reusability**: Load any tournament match schedule on the fly by pasting a public Google Sheet link.
+### 🌐 Live Deployments
+- **Primary App (Firebase Hosting)**: **[https://vex-33111c.web.app](https://vex-33111c.web.app)**
+- **GitHub Pages Mirror**: **[https://mlucodeacademy.github.io/vex-scouting-app/](https://mlucodeacademy.github.io/vex-scouting-app/)**
 
 ---
 
-## 🚀 How Another User or Team Can Deploy This
+## ✨ Key Features
 
-Because this app is a static single-page web app (vanilla HTML5, CSS3, JavaScript) with offline-first local storage, another user has several simple deployment options:
-
-### Option 1: GitHub Pages (Easiest — Free, No Firebase Required)
-
-If another user doesn't want or need a Firebase account, they can run this entirely on GitHub Pages. The app automatically stores all scouting, match delays, and custom schedules in the browser's `localStorage`.
-
-1. **Fork or push** this repository to GitHub.
-2. In the GitHub repository, go to **Settings** > **Pages**.
-3. Under **Build and deployment**:
-   - **Source**: `Deploy from a branch`
-   - **Branch**: `main` (or your branch), folder: `/public` (or `/` if you move files to root).
-4. Click **Save**. Within 1–2 minutes, your site is live at:
-   ```
-   https://<username>.github.io/<repo-name>/
-   ```
-5. *(Optional)* Pass custom parameters in the URL:
-   ```
-   https://<username>.github.io/<repo-name>/?team=1234A
-   ```
+- **🧭 Multi-Page App Navigation**:
+  - **🏠 Home Dashboard**: At-a-glance **"Next Up" Hero Banner** (station `RED 1/2` or `BLUE 1/2`, field assignment, alliance partner, opponents, and matches away), **🟢 On Field Now** tracker, **🏆 Current Rank** card, and upcoming personal matches.
+  - **★ My Team**: Personal qualification & elimination schedule with live scores (`0 : 0` → `✅ Final`).
+  - **📅 Schedule**: Full division schedule (Quals + Elimination brackets) with instant search and field filters (`Buffalo` / `Kirby`).
+  - **🏆 Rankings**: Live division standings (`Rank`, `Team`, `W-L-T`, `WP`, `AP`, `SP`).
+  - **🔭 Scout & Pick List**: Sortable scouting leaderboard combining `0–5` scout ratings (`Auton`, `Match Loading`, `Scoring`, `Toggle Mech`, `Driving`), field notes, and 2026–2027 Season Skills scores.
+- **🎯 Multi-Team Switcher (Usable by Any Team)**:
+  - Tap the upper-left team badge (`33111C ▾`) or tap **`★ Set as My Team`** inside any team's dossier to switch the entire app's perspective to another team.
+  - Supports direct shareable URLs and QR codes per team: e.g., `https://vex-33111c.web.app/?team=1412J`.
+- **🕵️ Interactive Team Intelligence Dossiers**:
+  - Tap any team badge anywhere in the app to open their **Team Dossier**:
+    - **2026–2027 Season Skills High** (`Driver` + `Programming` breakdown)
+    - **Robot Name, School/Organization, Grade Level & City**
+    - **Crowdsourced Scouting Averages & Notes**
+    - **Full Event Match List & Live Scores**
+- **📍 Event Venue & Info Popup**:
+  - Tap the event header (`Texan Standoff ℹ️`) to view the host venue, street address, SKU (`RE-V5RC-26-5031`), field names, and 1-tap buttons for **Google Maps** and **RobotEvents**.
+- **🔒 Secure Server-Side API Sync Architecture**:
+  - Your RobotEvents API Bearer Token is **never** sent to client browsers.
+  - `sync_tournament.py` (via GitHub Actions cron or local terminal) polls the official RobotEvents API v2 and pushes normalized match results, `Sched` / `Actual` timestamps, rankings, and live skills runs to Firebase Realtime Database.
+- **📋 Dual Scouting Persistence (Firebase RTDB + Google Forms/Sheets)**:
+  - Submitting a scout report in the app (`➕ Scout`) syncs immediately to all teammates' phones via Firebase RTDB **and** posts directly to your team's Google Form / Google Sheets response spreadsheet.
 
 ---
 
-### Option 2: Deploy to Their Own Firebase Project (For Multi-Phone Live Sync)
+## 🏗️ Architecture
 
-To enable real-time collaboration where multiple team members scout and update match delays simultaneously from different phones:
-
-#### 1. Create a Free Firebase Project
-1. Go to [Firebase Console](https://console.firebase.google.com/) and click **Add project** (e.g. `my-vex-scout`).
-2. In the left sidebar, click **Build** > **Realtime Database** > **Create Database**.
-3. Start in **Test mode** (or paste the rules from `database.rules.json`).
-
-#### 2. Configure the Repository
-1. In `public/index.html` (around line 1060), update `RTDB_URL` with their database URL:
-   ```javascript
-   const RTDB_URL = "https://<your-project-id>-default-rtdb.firebaseio.com/vex_<your-team>";
-   ```
-   *(Or pass it as a URL parameter: `https://your-site.web.app/?rtdb=https://<your-db>.firebaseio.com/myteam`)*
-
-2. In `.firebaserc`, replace the project ID:
-   ```json
-   {
-     "projects": {
-       "default": "<your-firebase-project-id>"
-     }
-   }
-   ```
-
-3. In `firebase.json`, you can customize the hosting target or site name, or use the default:
-   ```json
-   {
-     "database": {
-       "rules": "database.rules.json"
-     },
-     "hosting": {
-       "public": "public",
-       "rewrites": [{ "source": "**", "destination": "/index.html" }]
-     }
-   }
-   ```
-
-#### 3. Deploy via Firebase CLI
-```bash
-# 1. Install Firebase CLI
-npm install -g firebase-tools
-
-# 2. Log in with your Google account
-firebase login
-
-# 3. Link to your project
-firebase use --add <your-firebase-project-id>
-
-# 4. Deploy Hosting & Database Rules
-firebase deploy
+```mermaid
+flowchart LR
+    RE["RobotEvents API v2<br/>(Matches, Rankings, Skills)"] -->|Bearer Token| SYNC["sync_tournament.py<br/>(GitHub Actions / Local)"]
+    SYNC -->|HTTPS PUT /live_event| RTDB[("Firebase RTDB<br/>/vex_33111c")]
+    RTDB -->|Live Poll| PHONES["Team Phones<br/>(Firebase Hosting & GitHub Pages)"]
+    PHONES -->|➕ Scout Report| RTDB
+    PHONES -->|POST formResponse| GFORM["Google Form &<br/>Response Sheet"]
 ```
 
 ---
 
-### Option 3: 1-Click Deploy on Vercel, Netlify, or Cloudflare Pages
+## ⚡ Running Live Tournament Sync (`sync_tournament.py`)
 
-1. Connect your GitHub repository to [Vercel](https://vercel.com/) or [Netlify](https://www.netlify.com/).
-2. Set the **Root Directory** to `public` (or set the publish directory to `public`).
-3. Deploy!
+### Option A: Automated via GitHub Actions
+The workflow in [`.github/workflows/sync_tournament.yml`](.github/workflows/sync_tournament.yml) runs `sync_tournament.py` automatically on tournament day (every 5 minutes) or on demand via **Actions → VEX Live Tournament Sync → Run workflow**.
+- Store your RobotEvents API v2 JWT in your repo's **Settings → Secrets and variables → Actions** as `ROBOTEVENTS_TOKEN`.
+
+### Option B: Local Game-Day Loop (Every 60 Seconds)
+1. Create a `.env` file in the project root (git-ignored):
+   ```ini
+   ROBOTEVENTS_TOKEN=your_robotevents_jwt_token_here
+   ```
+2. Run a one-time sync or continuous 60-second loop:
+   ```bash
+   # One-time sync
+   python3 sync_tournament.py
+
+   # Continuous 60s loop during the tournament
+   while true; do python3 sync_tournament.py; sleep 60; done
+   ```
+
+What `sync_tournament.py` updates automatically:
+- Dynamic schedule regeneration if the Event Partner re-runs pairings after check-in
+- Elimination bracket matches (`R16`, `QF`, `SF`, `F`) as soon as Alliance Selection finishes
+- Official Red & Blue scores (`0 : 0` → `✅ Final`)
+- `Sched` vs. `Actual` match start timestamps and current `🟢 ON FIELD` match number
+- Official Division Rankings (`W-L-T`, `WP`, `AP`, `SP`)
+- Live tournament Skills runs (`/events/{id}/skills`)
 
 ---
 
-## 🛠️ Customizing for Your Team & Tournament
+## 🚀 Deploying Updates
 
-### 1. Setting Your Focus Team
-- Change the team dropdown at the top of the app, or pass `?team=YOUR_TEAM_NUMBER` in the URL (e.g. `?team=98250A`).
-- The app remembers your selected team in `localStorage`.
+### 1. GitHub Pages
+GitHub Pages serves the root `index.html` on the `main` branch (`https://mlucodeacademy.github.io/vex-scouting-app/`). Whenever `public/index.html` is updated, keep root `index.html` in sync:
+```bash
+cp public/index.html index.html
+git add public/index.html index.html
+git commit -m "chore: sync root index.html for GitHub Pages"
+git push
+```
 
-### 2. Loading a New Tournament Schedule
-1. In Google Sheets, make sure your match schedule spreadsheet is set to **"Anyone with the link can view"**.
-2. Columns should follow standard VEX format:
-   `Match | Time | Field | Red 1 | Red 2 | Blue 1 | Blue 2`
-3. Click the **📱 QR / Share** button in the app header, paste the Google Sheet URL into **"Reuse for Future Tournaments"**, and tap **"Load Schedule from Sheet"**.
-4. The schedule updates immediately and syncs across all connected team devices.
-
-### 3. Connecting Your Own Google Form (Optional)
-To submit scouting reports into your own Google Form:
-1. Inspect your Google Form's `action` URL and input entry IDs (`entry.XXXXXXXXX`).
-2. In `public/index.html`, update `GOOGLE_FORM_ACTION` and the field IDs inside `submitScoutReport()`.
+### 2. Firebase Hosting
+Firebase Hosting serves from the `public/` directory (`https://vex-33111c.web.app`):
+```bash
+npx -y firebase-tools@latest deploy --only hosting --project my-project-1524591195518
+```
 
 ---
 
 ## 🔒 Security & Privacy
 
-- No sensitive API keys or secret credentials are stored in this repository.
-- Firebase Realtime Database operates via open REST endpoints during tournament play.
-- Works 100% offline with zero external network dependencies if the network is spotty inside venue arenas.
+- **Zero Client Token Exposure**: `ROBOTEVENTS_TOKEN` is read exclusively from `.env` (git-ignored) or GitHub Actions Secrets (`secrets.ROBOTEVENTS_TOKEN`). It is never embedded in `index.html`.
+- **Offline Resilient**: Client phones cache schedule, scores, and scouting data in `localStorage` so the app remains responsive even inside school gyms with spotty cellular reception.
