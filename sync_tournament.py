@@ -259,11 +259,23 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--loop", type=int, default=0, help="Poll interval in seconds (0 = run once)")
     parser.add_argument("--duration", type=int, default=0, help="Max total duration in seconds when looping (0 = infinite)")
+    parser.add_argument("--force", action="store_true", help="Run even outside game day hours")
     args = parser.parse_args()
+
+    def is_game_day_hours():
+        now = datetime.datetime.now()
+        # Game day: Saturday, Nov 7, 2026 between 7:30 AM and 6:30 PM local time
+        if now.date() != datetime.date(2026, 11, 7):
+            return False
+        hm = (now.hour, now.minute)
+        return (7, 30) <= hm <= (18, 30)
 
     if args.loop > 0:
         start_ts = time.time()
         while True:
+            if not args.force and not is_game_day_hours():
+                print(f"[{datetime.datetime.now().strftime('%I:%M:%S %p')}] Outside game day hours (Nov 7, 2026 7:30 AM - 6:30 PM). Stopping sync.", flush=True)
+                break
             try:
                 sync()
             except Exception as e:
@@ -272,4 +284,7 @@ if __name__ == "__main__":
                 break
             time.sleep(args.loop)
     else:
-        sync()
+        if not args.force and not is_game_day_hours():
+            print("Outside game day hours (Nov 7, 2026 7:30 AM - 6:30 PM). Use --force to run manually.", flush=True)
+        else:
+            sync()
