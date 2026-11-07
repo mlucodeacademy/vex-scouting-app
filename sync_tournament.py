@@ -77,9 +77,9 @@ def sync():
             break
         page += 1
     
-    # 2. Fetch rankings
+    # 2. Fetch rankings (sort ascending #1 -> #N since RobotEvents API returns descending)
     rank_data = api_get(f"/events/{EVENT_ID}/divisions/1/rankings?per_page=100")
-    rankings = rank_data.get("data", [])
+    rankings = sorted(rank_data.get("data", []), key=lambda r: r.get("rank", 999))
 
     # 3. Fetch live event skills runs
     skills_data = api_get(f"/events/{EVENT_ID}/skills?per_page=100").get("data", [])

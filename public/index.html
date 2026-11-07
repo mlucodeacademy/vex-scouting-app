@@ -872,7 +872,7 @@
       </div>
       <div class="form-group">
         <label for="scoutTeamSelect">Team Number *</label>
-        <select id="scoutTeamSelect" class="text-input"></select>
+        <select id="scoutTeamSelect" class="text-input" onchange="onScoutTeamChange()"></select>
       </div>
       <div class="form-group">
         <label for="scoutMatchInput">Match (e.g. Q4)</label>
@@ -936,12 +936,13 @@
     const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdwNt6qgAiVjDCJENCsS-nvZEpEM_lE00ivLVH9KuKMEnDtsw/formResponse";
 
     // Tournament LocalStorage Scoping Key
-    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v5";
+    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v6";
     if (localStorage.getItem("vex_current_tournament_id") !== CURRENT_TOURNAMENT_ID) {
       localStorage.setItem("vex_current_tournament_id", CURRENT_TOURNAMENT_ID);
       localStorage.removeItem("vex_custom_matches");
       localStorage.removeItem("vex_scores");
       localStorage.removeItem("vex_match_delays");
+      localStorage.removeItem("vex_scouting");
     }
 
     // State
@@ -1324,10 +1325,11 @@
       document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
 
       if (!state.rankings || !state.rankings.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Rankings will populate as tournament matches finish tomorrow!</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Rankings will populate as tournament matches finish!</td></tr>`;
         return;
       }
-      tbody.innerHTML = state.rankings.map(r => {
+      const sortedRankings = [...state.rankings].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+      tbody.innerHTML = sortedRankings.map(r => {
         const teamNum = r.team ? cleanTeam(r.team.name) : "";
         const isOur = teamNum === state.focusTeam;
         return `
@@ -1444,6 +1446,12 @@
       });
     }
 
+    function onScoutTeamChange() {
+      currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
+      document.getElementById("scoutCommentInput").value = "";
+      initRatingRows();
+    }
+
     function openScoutModal(teamNum, matchId) {
       const sel = document.getElementById("scoutTeamSelect");
       const targetTeam = cleanTeam(teamNum) || state.focusTeam;
@@ -1451,6 +1459,7 @@
       sel.value = exact;
       document.getElementById("scoutMatchInput").value = matchId || "";
       document.getElementById("scoutCommentInput").value = "";
+      currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
       selectSubmitter(state.submitter);
       initRatingRows();
       document.getElementById("scoutDialog").showModal();
@@ -1529,7 +1538,7 @@
         const data = await res.json();
         if (data) {
           if (data.scouting) {
-            Object.assign(state.scouting, data.scouting);
+            state.scouting = data.scouting;
             localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
           }
           if (data.live_event) {
