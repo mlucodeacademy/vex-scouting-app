@@ -5,7 +5,9 @@ Runs locally or as a scheduled background cron/action.
 Pulls live matches, scores, and rankings from events.vex.com API and pushes to Firebase RTDB.
 Token is kept secure in this environment and NEVER exposed to client browsers.
 """
-import sys, json, os, urllib.request, datetime
+import sys, json, os, urllib.request, datetime, zoneinfo
+
+EVENT_TZ = zoneinfo.ZoneInfo("America/Chicago")
 
 def load_token():
     tok = os.environ.get("ROBOTEVENTS_TOKEN", "").strip()
@@ -34,6 +36,8 @@ def fmt_iso_time(iso_str):
         return ""
     try:
         dt = datetime.datetime.fromisoformat(iso_str)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(EVENT_TZ)
         return dt.strftime("%-I:%M %p")
     except Exception:
         return ""
