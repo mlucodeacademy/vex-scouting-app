@@ -82,10 +82,19 @@
       color: #fff;
       font-weight: 800;
       font-size: 0.85rem;
-      padding: 3px 7px;
+      padding: 4px 8px;
       border-radius: 7px;
       letter-spacing: 0.02em;
       flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+    }
+    .brand-badge:active {
+      transform: scale(0.96);
     }
     .brand-title {
       font-size: 0.88rem;
@@ -635,7 +644,7 @@
   <header>
     <div class="header-top">
       <div class="brand" onclick="navigate('home')">
-        <span class="brand-badge" id="headerTeamBadge">33111C</span>
+        <button type="button" class="brand-badge" id="headerTeamBadge" onclick="event.stopPropagation(); openTeamSwitcherModal()" title="Tap to switch active team">33111C ▾</button>
         <div class="brand-text">
           <div class="brand-title" id="eventTitle">Texan Standoff</div>
           <div class="brand-sub">
@@ -675,7 +684,7 @@
       <div class="action-tiles">
         <button type="button" class="action-tile" onclick="navigate('my')">
           <span>★ My Matches (<span id="homeMyCount">6</span>)</span>
-          <span class="desc">33111C personal schedule & partners</span>
+          <span class="desc" id="homeMyDesc">33111C personal schedule & partners</span>
         </button>
         <button type="button" class="action-tile" onclick="navigate('all')">
           <span>📅 All Matches (53)</span>
@@ -693,7 +702,7 @@
 
       <div style="font-size:0.8rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
         <span>My Upcoming Matches</span>
-        <a href="javascript:void(0)" onclick="navigate('my')" style="color:var(--accent); text-decoration:none;">View All (6) →</a>
+        <a href="javascript:void(0)" id="homeViewAllMyLink" onclick="navigate('my')" style="color:var(--accent); text-decoration:none;">View All (6) →</a>
       </div>
       <div id="homeMyMatchesList"></div>
     </section>
@@ -701,7 +710,7 @@
     <!-- VIEW 2: MY MATCHES -->
     <section id="view-my" class="view-panel">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-        <h2 style="font-size:1.1rem; margin:0; font-weight:900;">★ 33111C Match Schedule</h2>
+        <h2 id="myMatchesTitle" style="font-size:1.1rem; margin:0; font-weight:900;">★ 33111C Match Schedule</h2>
         <button class="mini-btn" onclick="navigate('home')">← Dashboard</button>
       </div>
       <div id="myMatchesList"></div>
@@ -788,6 +797,19 @@
     </button>
   </nav>
 
+  <!-- MODAL 0: SWITCH ACTIVE TEAM -->
+  <dialog id="teamSwitcherDialog" closedby="any" aria-labelledby="teamSwitcherTitle">
+    <div class="dialog-header">
+      <h2 id="teamSwitcherTitle">🎯 Select Your Team</h2>
+      <button class="mini-btn" onclick="document.getElementById('teamSwitcherDialog').close()">✕ Close</button>
+    </div>
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
+      Switch the app perspective to any team at Texan Standoff. All schedules, next-up alerts, and rankings will adapt automatically.
+    </div>
+    <input type="search" id="teamSwitcherSearch" class="search-input" style="width:100%; margin-bottom:10px; box-sizing:border-box;" placeholder="Search team # or name (e.g. 33111C, 1412J)..." oninput="renderTeamSwitcherList()" />
+    <div id="teamSwitcherList" style="max-height:55vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
+  </dialog>
+
   <!-- MODAL 1: TEAM DETAIL DOSSIER (OPENS ON TEAM TAP) -->
   <dialog id="teamDetailDialog" closedby="any" aria-labelledby="teamDetailTitle">
     <div class="dialog-header">
@@ -796,7 +818,8 @@
     </div>
     <div id="teamDetailContent"></div>
     <div style="margin-top:12px; display:flex; gap:8px;">
-      <button class="full-btn" id="scoutThisTeamBtn" style="margin-top:0;">🔭 Submit Scout Report</button>
+      <button class="full-btn" id="scoutThisTeamBtn" style="margin-top:0; flex:1;">🔭 Scout Team</button>
+      <button class="mini-btn" id="setFocusTeamBtn" style="padding:10px 12px; font-weight:800;">★ Set as My Team</button>
     </div>
   </dialog>
 
@@ -912,7 +935,7 @@
       <div id="qrContainer" style="background:#fff; padding:12px; border-radius:12px; display:inline-block; margin:6px 0;"></div>
       <div style="margin-top:10px; display:flex; gap:8px; justify-content:center;">
         <button class="icon-btn primary" onclick="shareLinkNative()">📤 Share App</button>
-        <button class="icon-btn" onclick="navigator.clipboard.writeText(window.location.href); alert('Copied App URL!')">📋 Copy App Link</button>
+        <button class="icon-btn" onclick="navigator.clipboard.writeText(getShareAppUrl()); alert('Copied App URL for ' + state.focusTeam + '!')">📋 Copy App Link</button>
       </div>
       <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:12px;">
         <div style="font-size:0.75rem; color:var(--muted); margin-bottom:6px;">Share standalone Google Form for external scouts:</div>
@@ -939,9 +962,14 @@
     }
 
     // State
+    const urlTeamParam = new URLSearchParams(window.location.search).get("team");
+    const initialFocusTeam = (urlTeamParam && TEAM_PROFILES[urlTeamParam.toUpperCase()])
+      ? urlTeamParam.toUpperCase()
+      : (localStorage.getItem("vex_focus_team") || "33111C");
+
     let state = {
       currentView: "home",
-      focusTeam: "33111C",
+      focusTeam: initialFocusTeam,
       submitter: localStorage.getItem("vex_submitter") || "Andrew",
       fieldFilter: "ALL",
       delayMinutes: 0,
@@ -956,6 +984,55 @@
     let currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
 
     function cleanTeam(t) { return (t || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(); }
+
+    // ACTIVE TEAM SWITCHER
+    function openTeamSwitcherModal() {
+      const searchInput = document.getElementById("teamSwitcherSearch");
+      if (searchInput) searchInput.value = "";
+      renderTeamSwitcherList();
+      document.getElementById("teamSwitcherDialog").showModal();
+    }
+
+    function renderTeamSwitcherList() {
+      const q = (document.getElementById("teamSwitcherSearch").value || "").trim().toLowerCase();
+      const allNums = Object.keys(TEAM_PROFILES).sort();
+      const filtered = allNums.filter(num => {
+        if (!q) return true;
+        const p = TEAM_PROFILES[num] || {};
+        return num.toLowerCase().includes(q) || (p.name || "").toLowerCase().includes(q) || (p.org || "").toLowerCase().includes(q);
+      });
+
+      const listEl = document.getElementById("teamSwitcherList");
+      listEl.innerHTML = filtered.map(num => {
+        const p = TEAM_PROFILES[num] || {};
+        const isCurrent = num === state.focusTeam;
+        return `
+          <button type="button" onclick="selectFocusTeam('${num}')" style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:10px 12px; border-radius:10px; border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border)'}; background:${isCurrent ? 'light-dark(rgba(234,88,12,0.1), rgba(249,115,22,0.16))' : 'var(--surface-2)'}; color:var(--text); cursor:pointer;">
+            <div>
+              <div style="font-weight:900; font-size:0.92rem; display:flex; align-items:center; gap:6px;">
+                <span>${num}</span>
+                <span style="font-weight:700; font-size:0.8rem; color:var(--muted);">${p.name || ''}</span>
+              </div>
+              <div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">${p.org || ''}${p.city ? ' • ' + p.city : ''}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              ${p.bestSkills ? `<span class="scout-badge">★ ${p.bestSkills}</span>` : ''}
+              ${isCurrent ? '<span style="color:var(--accent); font-weight:900; font-size:0.8rem;">✓ Active</span>' : ''}
+            </div>
+          </button>
+        `;
+      }).join("") || "<div style='color:var(--muted); text-align:center; padding:14px; font-size:0.82rem;'>No matching teams found.</div>";
+    }
+
+    function selectFocusTeam(teamNum) {
+      const clean = cleanTeam(teamNum);
+      if (!clean) return;
+      state.focusTeam = clean;
+      localStorage.setItem("vex_focus_team", clean);
+      const dlg = document.getElementById("teamSwitcherDialog");
+      if (dlg && dlg.open) dlg.close();
+      renderAll();
+    }
 
     // NAVIGATION SYSTEM
     function navigate(viewName) {
@@ -1114,6 +1191,14 @@
         document.getElementById("teamDetailDialog").close();
         openScoutModal(clean);
       };
+      const focusBtn = document.getElementById("setFocusTeamBtn");
+      if (focusBtn) {
+        focusBtn.textContent = clean === state.focusTeam ? "✓ Active Team" : "★ Set as My Team";
+        focusBtn.onclick = () => {
+          selectFocusTeam(clean);
+          document.getElementById("teamDetailDialog").close();
+        };
+      }
       document.getElementById("teamDetailDialog").showModal();
     }
 
@@ -1280,8 +1365,10 @@
     // MY MATCHES VIEW
     function renderMyMatches() {
       const myMatches = state.matches.filter(m => [cleanTeam(m.red1), cleanTeam(m.red2), cleanTeam(m.blue1), cleanTeam(m.blue2)].includes(state.focusTeam));
-      document.getElementById("myMatchesList").innerHTML = myMatches.map(m => renderMatchCard(m)).join("") || "<p style='color:var(--muted)'>No matches found for 33111C.</p>";
+      document.getElementById("myMatchesList").innerHTML = myMatches.map(m => renderMatchCard(m)).join("") || `<p style='color:var(--muted)'>No matches found for ${state.focusTeam}.</p>`;
       document.getElementById("homeMyCount").textContent = myMatches.length;
+      const viewAllLink = document.getElementById("homeViewAllMyLink");
+      if (viewAllLink) viewAllLink.textContent = `View All (${myMatches.length}) →`;
 
       const unplayed = myMatches.filter(m => !isMatchDone(m)).slice(0, 2);
       document.getElementById("homeMyMatchesList").innerHTML = unplayed.map(m => renderMatchCard(m)).join("") || "<p style='color:var(--muted);font-size:0.8rem;'>All matches played!</p>";
@@ -1290,6 +1377,9 @@
     // RANKINGS VIEW
     function renderRankings() {
       const tbody = document.getElementById("rankingsTableBody");
+      document.getElementById("homeOurRank").textContent = "#--";
+      document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
+
       if (!state.rankings || !state.rankings.length) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Rankings will populate as tournament matches finish tomorrow!</td></tr>`;
         return;
@@ -1363,6 +1453,14 @@
     }
 
     function renderAll() {
+      document.title = `${state.focusTeam} VEX Hub • Texan Standoff`;
+      const badgeEl = document.getElementById("headerTeamBadge");
+      if (badgeEl) badgeEl.textContent = `${state.focusTeam} ▾`;
+      const myDescEl = document.getElementById("homeMyDesc");
+      if (myDescEl) myDescEl.textContent = `${state.focusTeam} personal schedule & partners`;
+      const myTitleEl = document.getElementById("myMatchesTitle");
+      if (myTitleEl) myTitleEl.textContent = `★ ${state.focusTeam} Match Schedule`;
+
       renderHomeHero();
       renderMyMatches();
       renderAllMatches();
@@ -1617,22 +1715,27 @@
       a.click();
     }
 
+    function getShareAppUrl() {
+      return `${window.location.origin}/?team=${encodeURIComponent(state.focusTeam)}`;
+    }
+
     function openShareModal() {
-      const url = window.location.origin;
+      const url = getShareAppUrl();
       const qrBox = document.getElementById("qrContainer");
       qrBox.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}" alt="QR Code" width="180" height="180" style="display:block;" />`;
       document.getElementById("shareDialog").showModal();
     }
 
     function shareLinkNative() {
+      const url = getShareAppUrl();
       if (navigator.share) {
         navigator.share({
-          title: "33111C VEX Scouting Hub",
-          text: "Live Texan Standoff schedule, delays & team scouting for 33111C",
-          url: window.location.origin
+          title: `${state.focusTeam} VEX Scouting Hub`,
+          text: `Live Texan Standoff schedule, delays & team scouting for ${state.focusTeam}`,
+          url
         }).catch(() => {});
       } else {
-        navigator.clipboard.writeText(window.location.origin);
+        navigator.clipboard.writeText(url);
         alert("App link copied to clipboard!");
       }
     }
