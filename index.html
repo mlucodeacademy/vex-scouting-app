@@ -560,7 +560,7 @@
     dialog::backdrop {
       background-color: rgba(0, 0, 0, 0.6);
       backdrop-filter: blur(3px);
-    }}
+    }
     .dialog-header {
       display: flex;
       justify-content: space-between;
@@ -569,10 +569,14 @@
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
       gap: 12px;
+      width: 100%;
+      box-sizing: border-box;
     }
     .dialog-header h2 {
       margin: 0;
       font-size: 1.05rem;
+      flex: 1;
+      min-width: 0;
     }
     .dialog-close-btn {
       background: var(--surface-2);
@@ -590,6 +594,7 @@
       font-weight: 800;
       cursor: pointer;
       flex-shrink: 0;
+      margin-left: auto;
       transition: background 0.15s ease, transform 0.1s ease;
       line-height: 1;
       padding: 0;
