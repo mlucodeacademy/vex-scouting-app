@@ -568,10 +568,36 @@
       margin-bottom: 12px;
       padding-bottom: 8px;
       border-bottom: 1px solid var(--border);
+      gap: 12px;
     }
     .dialog-header h2 {
       margin: 0;
       font-size: 1.05rem;
+    }
+    .dialog-close-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      min-height: 38px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, transform 0.1s ease;
+      line-height: 1;
+      padding: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .dialog-close-btn:active {
+      transform: scale(0.92);
+      background: var(--border);
     }
     .form-group { margin-bottom: 12px; }
     .form-group label {
@@ -794,7 +820,7 @@
   <dialog id="eventInfoDialog" closedby="any" aria-labelledby="eventInfoTitle">
     <div class="dialog-header">
       <h2 id="eventInfoTitle">📍 Event Details & Venue</h2>
-      <button class="mini-btn" onclick="document.getElementById('eventInfoDialog').close()">✕ Close</button>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('eventInfoDialog').close()" aria-label="Close">✕</button>
     </div>
     <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
       <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px;">
@@ -823,7 +849,7 @@
   <dialog id="teamSwitcherDialog" closedby="any" aria-labelledby="teamSwitcherTitle">
     <div class="dialog-header">
       <h2 id="teamSwitcherTitle">🎯 Select Your Team</h2>
-      <button class="mini-btn" onclick="document.getElementById('teamSwitcherDialog').close()">✕ Close</button>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('teamSwitcherDialog').close()" aria-label="Close">✕</button>
     </div>
     <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
       Switch the app perspective to any team at Texan Standoff. All schedules, next-up alerts, and rankings will adapt automatically.
@@ -836,7 +862,7 @@
   <dialog id="teamDetailDialog" closedby="any" aria-labelledby="teamDetailTitle">
     <div class="dialog-header">
       <h2 id="teamDetailTitle">Team Dossier</h2>
-      <button class="mini-btn" onclick="document.getElementById('teamDetailDialog').close()">✕ Close</button>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('teamDetailDialog').close()" aria-label="Close">✕</button>
     </div>
     <div id="teamDetailContent"></div>
     <div style="margin-top:12px; display:flex; gap:8px;">
@@ -849,7 +875,7 @@
   <dialog id="scoutDialog" closedby="any" aria-labelledby="scoutDialogTitle">
     <div class="dialog-header">
       <h2 id="scoutDialogTitle">🔭 Submit Scout Report</h2>
-      <button class="mini-btn" onclick="document.getElementById('scoutDialog').close()">✕ Close</button>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('scoutDialog').close()" aria-label="Close">✕</button>
     </div>
     <form id="scoutForm" onsubmit="submitScoutReport(event)">
       <div class="form-group">
@@ -908,7 +934,7 @@
   <dialog id="shareDialog" closedby="any" aria-labelledby="shareDialogTitle">
     <div class="dialog-header">
       <h2 id="shareDialogTitle">📱 Team QR & Live Link</h2>
-      <button class="mini-btn" onclick="document.getElementById('shareDialog').close()">✕ Close</button>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('shareDialog').close()" aria-label="Close">✕</button>
     </div>
     <div style="text-align:center; padding:8px 0;">
       <div style="font-weight:800; font-size:0.95rem; margin-bottom:2px;">Texan Standoff</div>
