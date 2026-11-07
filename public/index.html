@@ -1216,17 +1216,17 @@
           <div class="match-top">
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="match-id">${m.id}</span>
-              <span class="match-time" onclick="openScoreModal('${m.id}')">${getMatchDisplayTime(m)}</span>
-              ${isOnField ? '<span class="hero-badge" style="background:#16a34a;color:#fff;">🟢 ON FIELD</span>' : ''}
+              <span class="match-time" onclick="openScoreModal('${m.id}')" title="Tap for manual override">${getMatchDisplayTime(m)}</span>
+              ${isOnField ? '<span class="hero-badge" style="background:#16a34a;color:#fff;">🟢 ON FIELD</span>' : (isDone ? '<span style="font-size:0.72rem;color:var(--green);font-weight:700;">✅ Final</span>' : '')}
             </div>
-            <span style="font-size:0.75rem; font-weight:700; color:var(--muted);">${m.field}</span>
+            <span style="font-size:0.75rem; font-weight:700; color:var(--muted);">Field: ${m.field}</span>
           </div>
 
           <div class="alliances-grid">
             <div class="alliance-box red">
               <div class="alliance-header">
                 <span>Red Alliance</span>
-                <span class="score-pill ${hasRed ? 'has-score' : ''}" onclick="openScoreModal('${m.id}')">${hasRed ? sc.red : 'SCORE'}</span>
+                <span class="score-pill ${hasRed ? 'has-score' : ''}">${hasRed ? sc.red : '—'}</span>
               </div>
               ${renderTeamChip(m.red1, m.id)}
               ${renderTeamChip(m.red2, m.id)}
@@ -1234,18 +1234,10 @@
             <div class="alliance-box blue">
               <div class="alliance-header">
                 <span>Blue Alliance</span>
-                <span class="score-pill ${hasBlue ? 'has-score' : ''}" onclick="openScoreModal('${m.id}')">${hasBlue ? sc.blue : 'SCORE'}</span>
+                <span class="score-pill ${hasBlue ? 'has-score' : ''}">${hasBlue ? sc.blue : '—'}</span>
               </div>
               ${renderTeamChip(m.blue1, m.id)}
               ${renderTeamChip(m.blue2, m.id)}
-            </div>
-          </div>
-
-          <div class="match-footer">
-            <span style="font-size:0.72rem;">${isDone ? '✅ Finished' : (isOnField ? '🟢 Playing on field now' : 'Upcoming')}</span>
-            <div style="display:flex; gap:5px;">
-              <button type="button" class="mini-btn" onclick="setMatchOnFieldDirect(${m.num})">${isOnField ? '🟢 On Field' : '📍 Mark On Field'}</button>
-              <button type="button" class="mini-btn" onclick="openScoreModal('${m.id}')">${(hasRed || hasBlue) ? '✏️ Edit Score' : '✏️ Score'}</button>
             </div>
           </div>
         </article>
