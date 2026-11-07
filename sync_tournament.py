@@ -7,7 +7,19 @@ Token is kept secure in this environment and NEVER exposed to client browsers.
 """
 import sys, json, os, urllib.request, datetime
 
-TOKEN = os.environ.get("ROBOTEVENTS_TOKEN", "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiMWQxMGNhYTlhMmM4MjJlZTNiZDEwOTBkY2MxZGEzZjdkMGZhYzY0M2FmMGY1ZGU4Yjc3NGI2MmJhZGY4ZDIwYWI5YmRmYjhhNGQ3MDYzOGIiLCJpYXQiOjE3OTQwMjU3MzUuNDYyOTE0LCJuYmYiOjE3OTQwMjU3MzUuNDYyOTE1OSwiZXhwIjoyNzQwNzk2OTM1LjQ1NDIyMDgsInN1YiI6IjExNzUzNiIsInNjb3BlcyI6W119.hQUdbDOLoaFuFgAL9T8j3au8CN3gvgX0LUzzbxc5TUG_Io65D0t8eppEzd4jttgBrywX2203lRU81ubYuIUc0C63oqSboFXteuR-Br2npqjqGRt1JaLYdNvbA1u3m8c9a959BU8KkH5cQA2-TPX0trgZ1mH37mstSvzmiAlHHgWYNw4rcU7nX0q6nwp66F5V3cHBUZ6otF-K4mWSsMTwi7Yt-5_iNkLEHxEURbjrJ4Lo7DgL_yUSyK_whMd9IYX_mLiDcah3_dTy3JDYoFakhsIQzboWdbx67eMWnGPKowPlkjZFN4fC_yYFNID6UgOfTmmeMcIvW52v3zCKGTWtFCYBLtnT9juxjytbU95et8sfVh8HYyisKQBLB7offvggIrYnXLhw0t6iyvWE9Lua3Gib2pJkBQ1Rq6W36nql861yNRtnJd4oCLuR_S-0XRYZnXtG1QciYmcXYvvd9hQ_x02SAkUjQL7Ww1-TGPv5eKNK0p4b5vsQ6rxzAhZAI_zeXncr3UAxahT5aDU1BsVTZ81e6J0UcIYoMN6qvggpzF_pUVccgOd9jtzlQ3HVg1s76SloYzVH1PP1k3olETVUMBTIcklYx7c07vEXBmdkrqg8fdFo5BnDuiSJFMzdINWA2MROvc1S6wWElUgnPdq3ZlPc1-GvYkinZZ68k4Egy50")
+def load_token():
+    tok = os.environ.get("ROBOTEVENTS_TOKEN", "").strip()
+    if tok:
+        return tok
+    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                if line.startswith("ROBOTEVENTS_TOKEN="):
+                    return line.split("=", 1)[1].strip()
+    raise RuntimeError("Missing ROBOTEVENTS_TOKEN in environment or .env")
+
+TOKEN = load_token()
 RTDB_URL = "https://my-project-1524591195518-default-rtdb.firebaseio.com/vex_33111c"
 EVENT_ID = 65031 # Texan Standoff Nov 7, 2026
 

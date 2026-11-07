@@ -1403,6 +1403,8 @@
       if (myDescEl) myDescEl.textContent = `${state.focusTeam} personal schedule & partners`;
       const myTitleEl = document.getElementById("myMatchesTitle");
       if (myTitleEl) myTitleEl.textContent = `★ ${state.focusTeam} Match Schedule`;
+      const allCountEl = document.getElementById("homeAllCount");
+      if (allCountEl) allCountEl.textContent = state.matches.length;
 
       renderHomeHero();
       renderMyMatches();
@@ -1410,10 +1412,10 @@
       renderRankings();
       renderPickList();
 
-      document.getElementById("homeOnFieldMatch").textContent = "Q" + state.onFieldMatchNum;
-      const onFieldM = state.matches.find(item => item.num === state.onFieldMatchNum);
+      const onFieldM = state.matches.find(item => item.num === state.onFieldMatchNum) || state.matches[0];
+      document.getElementById("homeOnFieldMatch").textContent = onFieldM ? onFieldM.id : ("Q" + state.onFieldMatchNum);
       if (onFieldM) {
-        document.getElementById("homeDelaySub").textContent = `${onFieldM.field} • ${getMatchDisplayTime(onFieldM)}`;
+        document.getElementById("homeDelaySub").textContent = `Field: ${onFieldM.field} • ${getMatchDisplayTime(onFieldM)}`;
       } else {
         document.getElementById("homeDelaySub").textContent = "Live API Sync";
       }
@@ -1535,6 +1537,9 @@
             localStorage.setItem("vex_scores", JSON.stringify(state.scores));
           }
           if (data.live_event) {
+            if (Array.isArray(data.live_event.matches) && data.live_event.matches.length > 0) {
+              state.matches = data.live_event.matches;
+            }
             if (data.live_event.scores) {
               Object.assign(state.scores, data.live_event.scores);
               localStorage.setItem("vex_scores", JSON.stringify(state.scores));

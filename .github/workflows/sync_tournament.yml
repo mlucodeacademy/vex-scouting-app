@@ -1,0 +1,21 @@
+name: VEX Live Tournament Sync
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Runs every 5 minutes on Nov 7 & Nov 8 UTC (covers 7:00 AM - 7:00 PM Central Time on Saturday Nov 7)
+    - cron: '*/5 13-23 7 11 *'
+    - cron: '*/5 0-1 8 11 *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sync RobotEvents to Firebase RTDB
+        env:
+          ROBOTEVENTS_TOKEN: ${{ secrets.ROBOTEVENTS_TOKEN }}
+          TZ: America/Chicago
+        run: python3 sync_tournament.py
