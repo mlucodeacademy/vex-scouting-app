@@ -936,7 +936,7 @@
     const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdwNt6qgAiVjDCJENCsS-nvZEpEM_lE00ivLVH9KuKMEnDtsw/formResponse";
 
     // Tournament LocalStorage Scoping Key
-    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v4";
+    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v5";
     if (localStorage.getItem("vex_current_tournament_id") !== CURRENT_TOURNAMENT_ID) {
       localStorage.setItem("vex_current_tournament_id", CURRENT_TOURNAMENT_ID);
       localStorage.removeItem("vex_custom_matches");
@@ -1532,18 +1532,12 @@
             Object.assign(state.scouting, data.scouting);
             localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
           }
-          if (data.scores) {
-            Object.assign(state.scores, data.scores);
-            localStorage.setItem("vex_scores", JSON.stringify(state.scores));
-          }
           if (data.live_event) {
             if (Array.isArray(data.live_event.matches) && data.live_event.matches.length > 0) {
               state.matches = data.live_event.matches;
             }
-            if (data.live_event.scores) {
-              Object.assign(state.scores, data.live_event.scores);
-              localStorage.setItem("vex_scores", JSON.stringify(state.scores));
-            }
+            state.scores = data.live_event.scores || {};
+            localStorage.setItem("vex_scores", JSON.stringify(state.scores));
             if (data.live_event.rankings) state.rankings = data.live_event.rankings;
             if (data.live_event.onFieldMatchNum) {
               state.onFieldMatchNum = data.live_event.onFieldMatchNum;
