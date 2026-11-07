@@ -645,8 +645,8 @@
     <div class="header-top">
       <div class="brand" onclick="navigate('home')">
         <button type="button" class="brand-badge" id="headerTeamBadge" onclick="event.stopPropagation(); openTeamSwitcherModal()" title="Tap to switch active team">33111C ▾</button>
-        <div class="brand-text">
-          <div class="brand-title" id="eventTitle">Texan Standoff</div>
+        <div class="brand-text" onclick="event.stopPropagation(); openEventInfoModal()" title="Tap for Event Location, Host & Details" style="cursor:pointer;">
+          <div class="brand-title" id="eventTitle">Texan Standoff <span style="font-size:0.75rem; opacity:0.8;">ℹ️</span></div>
           <div class="brand-sub">
             <span id="eventDateText" style="font-weight:600;">Nov 7, 2026</span>
             <span>•</span>
@@ -687,7 +687,7 @@
           <span class="desc" id="homeMyDesc">33111C personal schedule & partners</span>
         </button>
         <button type="button" class="action-tile" onclick="navigate('all')">
-          <span>📅 All Matches (53)</span>
+          <span>📅 All Matches (<span id="homeAllCount">53</span>)</span>
           <span class="desc">Full schedule by Kirby & Buffalo fields</span>
         </button>
         <button type="button" class="action-tile" onclick="navigate('rankings')">
@@ -797,6 +797,35 @@
     </button>
   </nav>
 
+  <!-- MODAL -1: EVENT LOCATION & DETAILS -->
+  <dialog id="eventInfoDialog" closedby="any" aria-labelledby="eventInfoTitle">
+    <div class="dialog-header">
+      <h2 id="eventInfoTitle">📍 Event Details & Venue</h2>
+      <button class="mini-btn" onclick="document.getElementById('eventInfoDialog').close()">✕ Close</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px;">
+        <div style="font-size:0.72rem; font-weight:800; color:var(--accent); text-transform:uppercase;">RE-V5RC-26-5031 • Event ID 65031</div>
+        <div style="font-size:1.05rem; font-weight:900; color:var(--text); margin-top:2px;">Texan Standoff</div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">VEX V5 Robotics Competition Override: Middle & High School Teams</div>
+      </div>
+
+      <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:6px;">
+        <div><strong style="color:var(--muted);">🏫 Host / Venue:</strong> <span style="font-weight:800;">Lamar High School</span></div>
+        <div><strong style="color:var(--muted);">📍 Address:</strong> <span>3325 Westheimer Road, Houston, TX 77098</span></div>
+        <div><strong style="color:var(--muted);">📅 Date:</strong> <span>Saturday, Nov 7, 2026</span></div>
+        <div><strong style="color:var(--muted);">🎮 Season:</strong> <span>VEX V5RC 2026-2027: Override (Season 204)</span></div>
+        <div><strong style="color:var(--muted);">🏟️ Format:</strong> <span>Division 1 • 35 Teams • 53 Qual Matches</span></div>
+        <div><strong style="color:var(--muted);">🎯 Competition Fields:</strong> <span>Kirby & Buffalo</span></div>
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;">
+        <a href="https://www.google.com/maps/search/?api=1&query=Lamar+High+School+3325+Westheimer+Road+Houston+TX+77098" target="_blank" rel="noopener" class="full-btn" style="flex:1; text-align:center; text-decoration:none; margin-top:0;">🗺️ Open Google Maps</a>
+        <a href="https://www.robotevents.com/robot-competitions/vex-robotics-competition/RE-V5RC-26-5031.html" target="_blank" rel="noopener" class="mini-btn" style="padding:11px 12px; text-decoration:none; font-weight:800; display:inline-flex; align-items:center;">🌐 RobotEvents Page</a>
+      </div>
+    </div>
+  </dialog>
+
   <!-- MODAL 0: SWITCH ACTIVE TEAM -->
   <dialog id="teamSwitcherDialog" closedby="any" aria-labelledby="teamSwitcherTitle">
     <div class="dialog-header">
@@ -877,52 +906,6 @@
     </form>
   </dialog>
 
-  <!-- MODAL 3: MATCH SCORE & TIME CASCADING MODAL -->
-  <dialog id="scoreDialog" closedby="any" aria-labelledby="scoreDialogTitle">
-    <div class="dialog-header">
-      <h2 id="scoreDialogTitle">Match Score & Timing</h2>
-      <button class="mini-btn" onclick="document.getElementById('scoreDialog').close()">✕ Close</button>
-    </div>
-    <form onsubmit="saveMatchScore(event)">
-      <input type="hidden" id="scoreMatchId" />
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-        <div class="form-group">
-          <label for="redScoreInput" style="color:var(--red-text)">🔴 Red Score</label>
-          <input type="number" id="redScoreInput" class="text-input" placeholder="0" min="0" />
-        </div>
-        <div class="form-group">
-          <label for="blueScoreInput" style="color:var(--blue-text)">🔵 Blue Score</label>
-          <input type="number" id="blueScoreInput" class="text-input" placeholder="0" min="0" />
-        </div>
-      </div>
-      <button type="submit" class="full-btn" style="margin-top:0;">💾 Save Score</button>
-    </form>
-    <hr style="border-color:var(--border); margin:12px 0;" />
-    <div class="form-group">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-        <label style="margin:0; font-weight:800; font-size:0.8rem;">⏱️ Start Time Adjustment (Cascades Forward)</label>
-        <span id="matchDelayBadge" style="color:var(--accent); font-weight:800; font-size:0.75rem;">+0m</span>
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
-        <div style="display:flex; gap:4px;">
-          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(-5)">-5m</button>
-          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(-3)">-3m</button>
-        </div>
-        <strong id="matchEstTimeDisplay" style="font-size:0.95rem; color:var(--text); min-width:75px; text-align:center;">11:57 AM</strong>
-        <div style="display:flex; gap:4px;">
-          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(3)">+3m</button>
-          <button type="button" class="mini-btn" onclick="stepCurrentMatchDelay(5)">+5m</button>
-        </div>
-      </div>
-      <div style="margin-top:8px; display:flex; gap:6px;">
-        <button type="button" class="mini-btn" style="flex:1; padding:7px;" onclick="syncCurrentMatchToClock()">⚡ Set to NOW (<span id="clockNowSpan"></span>)</button>
-        <button type="button" class="mini-btn" style="padding:7px;" onclick="resetCurrentMatchDelay()">Reset</button>
-      </div>
-    </div>
-    <hr style="border-color:var(--border); margin:12px 0;" />
-    <button type="button" class="mini-btn" style="width:100%; padding:9px;" onclick="setMatchOnField()">📍 Mark This Match as On Field Now</button>
-  </dialog>
-
   <!-- MODAL 4: SHARE QR & FORM LINK -->
   <dialog id="shareDialog" closedby="any" aria-labelledby="shareDialogTitle">
     <div class="dialog-header">
@@ -947,13 +930,13 @@
   <!-- DATA & SCRIPTS -->
   <script>
     const DEFAULT_MATCHES = [{"id": "Q1", "num": 1, "time": "10:20 AM", "field": "Kirby", "red1": "42703D", "red2": "1412J", "blue1": "2587K", "blue2": "88077A"}, {"id": "Q2", "num": 2, "time": "10:26 AM", "field": "Buffalo", "red1": "99008S", "red2": "285C", "blue1": "1815W", "blue2": "6079B"}, {"id": "Q3", "num": 3, "time": "10:32 AM", "field": "Kirby", "red1": "11770X", "red2": "5763X", "blue1": "42703C", "blue2": "81880A"}, {"id": "Q4", "num": 4, "time": "10:38 AM", "field": "Buffalo", "red1": "11770Y", "red2": "33111C", "blue1": "1815B", "blue2": "11770Z"}, {"id": "Q5", "num": 5, "time": "10:44 AM", "field": "Kirby", "red1": "10015Z", "red2": "7390A", "blue1": "1065A", "blue2": "56114A"}, {"id": "Q6", "num": 6, "time": "10:50 AM", "field": "Buffalo", "red1": "1221K", "red2": "285Z", "blue1": "77038V", "blue2": "11770W"}, {"id": "Q7", "num": 7, "time": "10:56 AM", "field": "Kirby", "red1": "56114B", "red2": "89437E", "blue1": "Missing", "blue2": "42703A"}, {"id": "Q8", "num": 8, "time": "11:02 AM", "field": "Buffalo", "red1": "1815R", "red2": "285X", "blue1": "42703B", "blue2": "89437F"}, {"id": "Q9", "num": 9, "time": "11:08 AM", "field": "Kirby", "red1": "67960E", "red2": "1815A", "blue1": "58290G", "blue2": "1412J"}, {"id": "Q10", "num": 10, "time": "11:14 AM", "field": "Buffalo", "red1": "1815W", "red2": "11770W", "blue1": "1065A", "blue2": "42703D"}, {"id": "Q11", "num": 11, "time": "11:20 AM", "field": "Kirby", "red1": "56114B", "red2": "2587K", "blue1": "7390A", "blue2": "285Z"}, {"id": "Q12", "num": 12, "time": "11:26 AM", "field": "Buffalo", "red1": "42703C", "red2": "42703B", "blue1": "10015Z", "blue2": "1815B"}, {"id": "Q13", "num": 13, "time": "11:32 AM", "field": "Kirby", "red1": "58290G", "red2": "56114A", "blue1": "285X", "blue2": "11770X"}, {"id": "Q14", "num": 14, "time": "11:38 AM", "field": "Buffalo", "red1": "81880A", "red2": "11770Z", "blue1": "99008S", "blue2": "1815A"}, {"id": "Q15", "num": 15, "time": "11:44 AM", "field": "Kirby", "red1": "11770Y", "red2": "5763X", "blue1": "89437E", "blue2": "285C"}, {"id": "Q16", "num": 16, "time": "11:50 AM", "field": "Buffalo", "red1": "6079B", "red2": "88077A", "blue1": "33111C", "blue2": "42703A"}, {"id": "Q17", "num": 17, "time": "11:56 AM", "field": "Kirby", "red1": "89437F", "red2": "Missing", "blue1": "67960E", "blue2": "1221K"}, {"id": "Q18", "num": 18, "time": "12:02 PM", "field": "Buffalo", "red1": "1815R", "red2": "77038V", "blue1": "11770X", "blue2": "99008S"}, {"id": "Q19", "num": 19, "time": "12:08 PM", "field": "Kirby", "red1": "56114A", "red2": "11770W", "blue1": "56114B", "blue2": "81880A"}, {"id": "Q20", "num": 20, "time": "12:14 PM", "field": "Buffalo", "red1": "7390A", "red2": "1815W", "blue1": "88077A", "blue2": "42703B"}, {"id": "Q21", "num": 21, "time": "12:20 PM", "field": "Kirby", "red1": "89437F", "red2": "1065A", "blue1": "58290G", "blue2": "89437E"}, {"id": "Q22", "num": 22, "time": "12:26 PM", "field": "Buffalo", "red1": "42703A", "red2": "285Z", "blue1": "5763X", "blue2": "10015Z"}, {"id": "Q23", "num": 23, "time": "12:32 PM", "field": "Kirby", "red1": "77038V", "red2": "1815A", "blue1": "33111C", "blue2": "Missing"}, {"id": "Q24", "num": 24, "time": "12:38 PM", "field": "Buffalo", "red1": "67960E", "red2": "42703D", "blue1": "285X", "blue2": "11770Y"}, {"id": "Q25", "num": 25, "time": "12:44 PM", "field": "Kirby", "red1": "1221K", "red2": "1412J", "blue1": "42703C", "blue2": "285C"}, {"id": "Q26", "num": 26, "time": "12:50 PM", "field": "Buffalo", "red1": "11770Z", "red2": "6079B", "blue1": "2587K", "blue2": "1815R"}, {"id": "Q27", "num": 27, "time": "1:45 PM", "field": "Kirby", "red1": "1815B", "red2": "99008S", "blue1": "285Z", "blue2": "1065A"}, {"id": "Q28", "num": 28, "time": "1:50 PM", "field": "Buffalo", "red1": "10015Z", "red2": "81880A", "blue1": "89437F", "blue2": "77038V"}, {"id": "Q29", "num": 29, "time": "1:55 PM", "field": "Kirby", "red1": "Missing", "red2": "42703B", "blue1": "11770Y", "blue2": "1412J"}, {"id": "Q30", "num": 30, "time": "2:00 PM", "field": "Buffalo", "red1": "285C", "red2": "285X", "blue1": "88077A", "blue2": "11770W"}, {"id": "Q31", "num": 31, "time": "2:05 PM", "field": "Kirby", "red1": "1815B", "red2": "1815W", "blue1": "1815A", "blue2": "5763X"}, {"id": "Q32", "num": 32, "time": "2:10 PM", "field": "Buffalo", "red1": "11770X", "red2": "89437E", "blue1": "67960E", "blue2": "6079B"}, {"id": "Q33", "num": 33, "time": "2:15 PM", "field": "Kirby", "red1": "58290G", "red2": "42703A", "blue1": "11770Z", "blue2": "7390A"}, {"id": "Q34", "num": 34, "time": "2:20 PM", "field": "Buffalo", "red1": "42703C", "red2": "1815R", "blue1": "42703D", "blue2": "56114B"}, {"id": "Q35", "num": 35, "time": "2:25 PM", "field": "Kirby", "red1": "33111C", "red2": "2587K", "blue1": "1221K", "blue2": "56114A"}, {"id": "Q36", "num": 36, "time": "2:30 PM", "field": "Buffalo", "red1": "89437E", "red2": "1412J", "blue1": "77038V", "blue2": "1815B"}, {"id": "Q37", "num": 37, "time": "2:35 PM", "field": "Kirby", "red1": "Missing", "red2": "5763X", "blue1": "285X", "blue2": "99008S"}, {"id": "Q38", "num": 38, "time": "2:40 PM", "field": "Buffalo", "red1": "89437F", "red2": "7390A", "blue1": "42703C", "blue2": "6079B"}, {"id": "Q39", "num": 39, "time": "2:45 PM", "field": "Kirby", "red1": "33111C", "red2": "285Z", "blue1": "11770X", "blue2": "1815W"}, {"id": "Q40", "num": 40, "time": "2:50 PM", "field": "Buffalo", "red1": "2587K", "red2": "11770W", "blue1": "42703B", "blue2": "67960E"}, {"id": "Q41", "num": 41, "time": "2:55 PM", "field": "Kirby", "red1": "81880A", "red2": "42703A", "blue1": "1221K", "blue2": "1815R"}, {"id": "Q42", "num": 42, "time": "3:00 PM", "field": "Buffalo", "red1": "285C", "red2": "10015Z", "blue1": "58290G", "blue2": "42703D"}, {"id": "Q43", "num": 43, "time": "3:05 PM", "field": "Kirby", "red1": "1065A", "red2": "1815A", "blue1": "56114B", "blue2": "11770Y"}, {"id": "Q44", "num": 44, "time": "3:10 PM", "field": "Buffalo", "red1": "88077A", "red2": "11770Z", "blue1": "56114A", "blue2": "89437E"}, {"id": "Q45", "num": 45, "time": "3:15 PM", "field": "Kirby", "red1": "99008S", "red2": "7390A", "blue1": "11770W", "blue2": "1412J"}, {"id": "Q46", "num": 46, "time": "3:20 PM", "field": "Buffalo", "red1": "67960E", "red2": "33111C", "blue1": "285C", "blue2": "81880A"}, {"id": "Q47", "num": 47, "time": "3:25 PM", "field": "Kirby", "red1": "285X", "red2": "77038V", "blue1": "2587K", "blue2": "42703A"}, {"id": "Q48", "num": 48, "time": "3:30 PM", "field": "Buffalo", "red1": "56114A", "red2": "42703D", "blue1": "285Z", "blue2": "6079B"}, {"id": "Q49", "num": 49, "time": "3:35 PM", "field": "Kirby", "red1": "42703B", "red2": "1065A", "blue1": "5763X", "blue2": "1221K"}, {"id": "Q50", "num": 50, "time": "3:40 PM", "field": "Buffalo", "red1": "88077A", "red2": "10015Z", "blue1": "1815A", "blue2": "1815R"}, {"id": "Q51", "num": 51, "time": "3:45 PM", "field": "Kirby", "red1": "42703C", "red2": "58290G", "blue1": "1815W", "blue2": "11770Y"}, {"id": "Q52", "num": 52, "time": "3:50 PM", "field": "Buffalo", "red1": "11770X", "red2": "56114B", "blue1": "89437F", "blue2": "11770Z"}, {"id": "Q53", "num": 53, "time": "3:55 PM", "field": "Kirby", "red1": "Missing", "red2": "1815B", "blue1": "81880A", "blue2": "2587K"}];
-    const TEAM_PROFILES = {"285C": {"id": 155746, "name": "DiscoBots Chronos", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 113, "bestProg": 108, "bestSkills": 221}, "285X": {"id": 85351, "name": "DiscoBots X", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 99, "bestProg": 74, "bestSkills": 173}, "285Z": {"id": 85352, "name": "DiscoBots Zephyr", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 82, "bestProg": 20, "bestSkills": 102}, "1065A": {"id": 153404, "name": "Sunny", "robot": "Sunny", "org": "SunnyRobotics", "city": "Houston", "grade": "High School", "bestDriver": 180, "bestProg": 176, "bestSkills": 356}, "1221K": {"id": 57138, "name": "The Falconeers", "robot": "", "org": "THE KINKAID SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 127, "bestProg": 103, "bestSkills": 230}, "1412J": {"id": 143954, "name": "BANSHEE!", "robot": "Psycho Frame", "org": "CYPRESS SPRINGS HIGH SCHOOL", "city": "Cypress", "grade": "High School", "bestDriver": 93, "bestProg": 106, "bestSkills": 199}, "1815A": {"id": 73086, "name": "WCS CATaclysm - A", "robot": "Asteroids", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 140, "bestProg": 21, "bestSkills": 161}, "1815B": {"id": 51054, "name": "WCS CATaclysm - B", "robot": "Beta", "org": "Westbury Christian School", "city": "Houston", "grade": "Middle School", "bestDriver": 11, "bestProg": 0, "bestSkills": 11}, "1815R": {"id": 129903, "name": "WCS CATaclysm - Refrigerator", "robot": "Refrigerator", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 80, "bestProg": 21, "bestSkills": 101}, "1815W": {"id": 142344, "name": "WCS CATaclysm - Wombat", "robot": "Wombat", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "Middle School", "bestDriver": 62, "bestProg": 40, "bestSkills": 102}, "2587K": {"id": 17848, "name": "DiscoBots skAIkru", "robot": "Octavia Blake", "org": "LAMAR HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 70, "bestProg": 24, "bestSkills": 94}, "4232N": {"id": 205256, "name": "Ink", "robot": "Sasha", "org": "Aerodyne Inc.", "city": "East Walpole", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "5763X": {"id": 202142, "name": "Rubicon", "robot": "Vortech\u2019s Redemption", "org": "Rubicon Robotics", "city": "Cypress", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "6079B": {"id": 46843, "name": "BattleRams", "robot": "BattleRams", "org": "Waltrip High School", "city": "Houston", "grade": "High School", "bestDriver": 64, "bestProg": 15, "bestSkills": 79}, "7390A": {"id": 46354, "name": "DiscoBots Absolute Zero", "robot": "mansa musa", "org": "Debakey High School For Health Prof", "city": "Houston", "grade": "High School", "bestDriver": 200, "bestProg": 100, "bestSkills": 300}, "10015Z": {"id": 197518, "name": "Zero Tolerance", "robot": "", "org": "Coughing Baby Robotics", "city": "Spring", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770W": {"id": 176350, "name": "Cherry on Top", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770X": {"id": 176351, "name": "ReIgnition", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 35, "bestProg": 15, "bestSkills": 50}, "11770Y": {"id": 176352, "name": "Grandma Approved", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 21, "bestProg": 15, "bestSkills": 36}, "11770Z": {"id": 176353, "name": "Phoenix", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 3, "bestProg": 0, "bestSkills": 3}, "33111C": {"id": 174158, "name": "RMC", "robot": "Zeta", "org": "Robot Mastery", "city": "Houston", "grade": "High School", "bestDriver": 95, "bestProg": 70, "bestSkills": 165}, "42703A": {"id": 176346, "name": "The Robot", "robot": "The Robot", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 13, "bestProg": 0, "bestSkills": 13}, "42703B": {"id": 176347, "name": "VORTECH", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 33, "bestProg": 6, "bestSkills": 39}, "42703C": {"id": 176348, "name": "CTRALTdefeat", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 27, "bestProg": 0, "bestSkills": 27}, "42703D": {"id": 176349, "name": "TigerBolts", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 11, "bestProg": 3, "bestSkills": 14}, "56114A": {"id": 174961, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 91, "bestProg": 61, "bestSkills": 152}, "56114B": {"id": 199994, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "58290G": {"id": 200155, "name": "Awtybots", "robot": "", "org": "The Awty International School", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "67960E": {"id": 188721, "name": "Quantum Eclipse", "robot": "Light", "org": "Parkside Robotics", "city": "Irving", "grade": "Middle School", "bestDriver": 38, "bestProg": 15, "bestSkills": 53}, "77038V": {"id": 127527, "name": "Voltage", "robot": "", "org": "BLANSON CTE HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 153, "bestProg": 89, "bestSkills": 242}, "81880A": {"id": 198902, "name": "Lone Star Titans", "robot": "Dragon Power", "org": "Sunflower", "city": "Pearland", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "88077A": {"id": 187346, "name": "FutureTech", "robot": "TechDuo", "org": "FutureTech", "city": "Houston", "grade": "Middle School", "bestDriver": 57, "bestProg": 20, "bestSkills": 77}, "89437E": {"id": 202033, "name": "TQQ", "robot": "TQQ", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437F": {"id": 202034, "name": "Phantom Menace", "robot": "Phantom Menace", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "99008S": {"id": 185163, "name": "E-Knights", "robot": "Insert Robot Name", "org": "Chill Robotics", "city": "Austin", "grade": "Middle School", "bestDriver": 68, "bestProg": 30, "bestSkills": 98}};
+    const TEAM_PROFILES = {"285C": {"id": 155746, "name": "DiscoBots Chronos", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 48, "bestProg": 13, "bestSkills": 61}, "285X": {"id": 85351, "name": "DiscoBots X", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 8, "bestProg": 0, "bestSkills": 8}, "285Z": {"id": 85352, "name": "DiscoBots Zephyr", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 38, "bestProg": 28, "bestSkills": 66}, "1065A": {"id": 153404, "name": "Sunny", "robot": "Sunny", "org": "SunnyRobotics", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1221K": {"id": 57138, "name": "The Falconeers", "robot": "", "org": "THE KINKAID SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1412J": {"id": 143954, "name": "BANSHEE!", "robot": "Psycho Frame", "org": "CYPRESS SPRINGS HIGH SCHOOL", "city": "Cypress", "grade": "High School", "bestDriver": 103, "bestProg": 78, "bestSkills": 181}, "1815A": {"id": 73086, "name": "WCS CATaclysm - A", "robot": "Asteroids", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815B": {"id": 51054, "name": "WCS CATaclysm - B", "robot": "Beta", "org": "Westbury Christian School", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815R": {"id": 129903, "name": "WCS CATaclysm - Refrigerator", "robot": "Refrigerator", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815W": {"id": 142344, "name": "WCS CATaclysm - Wombat", "robot": "Wombat", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "2587K": {"id": 17848, "name": "DiscoBots skAIkru", "robot": "Octavia Blake", "org": "LAMAR HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "4232N": {"id": 205256, "name": "Ink", "robot": "Sasha", "org": "Aerodyne Inc.", "city": "East Walpole", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "5763X": {"id": 202142, "name": "Rubicon", "robot": "Vortech\u2019s Redemption", "org": "Rubicon Robotics", "city": "Cypress", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "6079B": {"id": 46843, "name": "BattleRams", "robot": "BattleRams", "org": "Waltrip High School", "city": "Houston", "grade": "High School", "bestDriver": 20, "bestProg": 0, "bestSkills": 20}, "7390A": {"id": 46354, "name": "DiscoBots Absolute Zero", "robot": "mansa musa", "org": "Debakey High School For Health Prof", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "10015Z": {"id": 197518, "name": "Zero Tolerance", "robot": "", "org": "Coughing Baby Robotics", "city": "Spring", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770W": {"id": 176350, "name": "Cherry on Top", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770X": {"id": 176351, "name": "ReIgnition", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Y": {"id": 176352, "name": "Grandma Approved", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Z": {"id": 176353, "name": "Phoenix", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "33111C": {"id": 174158, "name": "RMC", "robot": "Zeta", "org": "Robot Mastery", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703A": {"id": 176346, "name": "The Robot", "robot": "The Robot", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703B": {"id": 176347, "name": "VORTECH", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703C": {"id": 176348, "name": "CTRALTdefeat", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703D": {"id": 176349, "name": "TigerBolts", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "56114A": {"id": 174961, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 78, "bestProg": 18, "bestSkills": 96}, "56114B": {"id": 199994, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "58290G": {"id": 200155, "name": "Awtybots", "robot": "", "org": "The Awty International School", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "67960E": {"id": 188721, "name": "Quantum Eclipse", "robot": "Light", "org": "Parkside Robotics", "city": "Irving", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "77038V": {"id": 127527, "name": "Voltage", "robot": "", "org": "BLANSON CTE HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "81880A": {"id": 198902, "name": "Lone Star Titans", "robot": "Dragon Power", "org": "Sunflower", "city": "Pearland", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "88077A": {"id": 187346, "name": "FutureTech", "robot": "TechDuo", "org": "FutureTech", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437E": {"id": 202033, "name": "TQQ", "robot": "TQQ", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437F": {"id": 202034, "name": "Phantom Menace", "robot": "Phantom Menace", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "99008S": {"id": 185163, "name": "E-Knights", "robot": "Insert Robot Name", "org": "Chill Robotics", "city": "Austin", "grade": "Middle School", "bestDriver": 68, "bestProg": 8, "bestSkills": 76}};
     const FORM_TEAM_OPTIONS = ["10015Z Zero Tolerance", "1065A Sunny", "11770W Cherry on Top", "11770X ReIgnition", "11770Y Grandma Approved", "11770Z Phoenix", "1221K The Falconeers", "1412J BANSHEE!", "1815A WCS CATaclysm - A", "1815B WCS CATaclysm - B", "1815R WCS CATaclysm - Refrigerator", "1815W WCS CATaclysm - Wombat", "2587K DiscoBots skAIkru", "285C DiscoBots Chronos", "285X DiscoBots X", "285Z DiscoBots Zephyr", "33111C RMC", "4232N Ink", "42703A The Robot", "42703B VORTECH", "42703C CTRALTdefeat", "42703D TigerBolts", "56114A Robo Riders", "56114B Robo Riders", "5763X Rubicon", "58290G Awtybots", "6079B BattleRams", "67960E Quantum Eclipse", "7390A DiscoBots Absolute Zero", "77038V Voltage", "81880A Lone Star Titans", "88077A FutureTech", "89437E TQQ", "89437F Phantom Menace", "99008S E-Knights"];
     const RTDB_URL = "https://my-project-1524591195518-default-rtdb.firebaseio.com/vex_33111c";
     const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdwNt6qgAiVjDCJENCsS-nvZEpEM_lE00ivLVH9KuKMEnDtsw/formResponse";
 
     // Tournament LocalStorage Scoping Key
-    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v3";
+    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v4";
     if (localStorage.getItem("vex_current_tournament_id") !== CURRENT_TOURNAMENT_ID) {
       localStorage.setItem("vex_current_tournament_id", CURRENT_TOURNAMENT_ID);
       localStorage.removeItem("vex_custom_matches");
@@ -972,8 +955,6 @@
       focusTeam: initialFocusTeam,
       submitter: localStorage.getItem("vex_submitter") || "Andrew",
       fieldFilter: "ALL",
-      delayMinutes: 0,
-      matchDelays: JSON.parse(localStorage.getItem("vex_match_delays") || "{}"),
       onFieldMatchNum: 1,
       matches: DEFAULT_MATCHES,
       scores: JSON.parse(localStorage.getItem("vex_scores") || "{}"),
@@ -984,6 +965,11 @@
     let currentRatings = { auton: 3, loading: 3, scoring: 3, toggle: 3, driving: 3 };
 
     function cleanTeam(t) { return (t || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(); }
+
+    // EVENT INFO MODAL
+    function openEventInfoModal() {
+      document.getElementById("eventInfoDialog").showModal();
+    }
 
     // ACTIVE TEAM SWITCHER
     function openTeamSwitcherModal() {
@@ -1055,76 +1041,21 @@
       }
     });
 
-    // TIME & DELAYS
-    function parseMatchTimeMinutes(timeStr) {
-      const m = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
-      if (!m) return 600;
-      let hr = parseInt(m[1], 10);
-      const min = parseInt(m[2], 10);
-      const ampm = m[3].toUpperCase();
-      if (ampm === "PM" && hr !== 12) hr += 12;
-      if (ampm === "AM" && hr === 12) hr = 0;
-      return hr * 60 + min;
-    }
-
-    function getMatchDelay(matchNum) {
-      const keys = Object.keys(state.matchDelays).map(Number).sort((a,b) => a - b);
-      if (keys.length > 0) {
-        let active = null;
-        for (const n of keys) {
-          if (n <= matchNum) active = state.matchDelays[n];
-          else break;
-        }
-        if (active !== null) return active;
-      }
-      return state.delayMinutes || 0;
-    }
-
-    function setMatchDelay(matchNum, delay) {
-      state.matchDelays[matchNum] = delay;
-      localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
-      saveLiveState("matchDelays/" + matchNum, delay);
-      renderAll();
-    }
-
-    function getMatchAdjustedMins(m) {
-      const base = parseMatchTimeMinutes(m.time);
-      const delay = getMatchDelay(m.num);
-      return base + delay;
-    }
-
+    // SCHEDULED & ACTUAL TIME (LIVE API)
     function getMatchDisplayTime(m) {
-      const adj = getMatchAdjustedMins(m);
-      let hr = Math.floor(adj / 60);
-      const min = adj % 60;
-      const ampm = hr >= 12 ? "PM" : "AM";
-      hr = hr % 12 || 12;
-      const delay = getMatchDelay(m.num);
-      const delayTag = delay !== 0 ? ` (${delay > 0 ? '+' : ''}${delay}m)` : '';
-      return `${hr}:${String(min).padStart(2, "0")} ${ampm}${delayTag}`;
+      const sc = state.scores[m.id] || {};
+      const schedStr = sc.scheduled || m.time;
+      const actualStr = sc.started || m.started;
+      if (actualStr) {
+        return `Sched: ${schedStr} • Actual: ${actualStr}`;
+      }
+      return `Sched: ${schedStr}`;
     }
 
     function isMatchDone(m) {
       const sc = state.scores[m.id];
-      if (sc && (sc.done || (sc.red !== undefined && sc.red !== "") || (sc.blue !== undefined && sc.blue !== ""))) return true;
+      if (sc && (sc.done || (sc.red !== undefined && sc.red !== "" && sc.red > 0) || (sc.blue !== undefined && sc.blue !== "" && sc.blue > 0))) return true;
       return m.num < state.onFieldMatchNum;
-    }
-
-    function setMatchOnFieldDirect(num) {
-      state.onFieldMatchNum = num;
-      const m = state.matches.find(item => item.num === num);
-      if (m && m.time) {
-        const now = new Date();
-        const nowMins = now.getHours() * 60 + now.getMinutes();
-        const baseMins = parseMatchTimeMinutes(m.time);
-        const calculatedDelay = nowMins - baseMins;
-        state.matchDelays[num] = calculatedDelay;
-        state.delayMinutes = calculatedDelay;
-        localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
-        saveLiveState("matchDelays/" + num, calculatedDelay);
-      }
-      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
-      renderAll();
     }
 
     // TEAM PROFILE MODAL (DOSSIER)
@@ -1145,7 +1076,7 @@
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
           <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:8px 10px;">
-            <div style="font-size:0.7rem; font-weight:700; color:var(--muted);">SEASON SKILLS HIGH</div>
+            <div style="font-size:0.7rem; font-weight:700; color:var(--muted);">2026-27 SEASON SKILLS</div>
             <div style="font-size:1.15rem; font-weight:900; color:light-dark(#15803d, #86efac);">${prof.bestSkills || '--'}</div>
             <div style="font-size:0.7rem; color:var(--muted);">Driver: ${prof.bestDriver || 0} • Prog: ${prof.bestProg || 0}</div>
           </div>
@@ -1175,10 +1106,13 @@
         <div style="max-height:180px; overflow-y:auto; font-size:0.75rem;">
           ${teamMatches.map(m => {
             const isRed = [cleanTeam(m.red1), cleanTeam(m.red2)].includes(clean);
+            const sc = state.scores[m.id] || {};
+            const rVal = sc.red !== undefined && sc.red !== "" ? sc.red : 0;
+            const bVal = sc.blue !== undefined && sc.blue !== "" ? sc.blue : 0;
             return `
               <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border);">
-                <span><strong>${m.id}</strong> (${m.time}) • <span style="color:${isRed ? 'var(--red-text)' : 'var(--blue-text)'}">${isRed ? 'RED' : 'BLUE'}</span></span>
-                <span>Field: ${m.field}</span>
+                <span><strong>${m.id}</strong> (${getMatchDisplayTime(m)}) • <span style="color:${isRed ? 'var(--red-text)' : 'var(--blue-text)'}">${isRed ? 'RED' : 'BLUE'}</span></span>
+                <span><strong>${rVal} : ${bVal}</strong> • ${m.field}</span>
               </div>
             `;
           }).join("")}
@@ -1265,7 +1199,7 @@
             <span class="hero-badge">🔥 NEXT UP FOR ${state.focusTeam}</span>
             <span style="font-size:0.78rem; font-weight:700;">${matchesAway === 0 ? '🟢 ON FIELD NOW!' : matchesAway + ' matches away'}</span>
           </div>
-          <div class="hero-title" onclick="openScoreModal('${nextMatch.id}')" style="cursor:pointer;">
+          <div class="hero-title">
             ${nextMatch.id} • ${getMatchDisplayTime(nextMatch)}
             <span style="font-size:0.8rem; font-weight:600; color:var(--muted);">[Field: ${nextMatch.field}]</span>
           </div>
@@ -1289,6 +1223,8 @@
       const sc = state.scores[m.id] || {};
       const hasRed = sc.red !== undefined && sc.red !== "" && sc.red !== null;
       const hasBlue = sc.blue !== undefined && sc.blue !== "" && sc.blue !== null;
+      const redScore = hasRed ? sc.red : 0;
+      const blueScore = hasBlue ? sc.blue : 0;
 
       let extraTop = "";
       if (m.num === 27) {
@@ -1299,19 +1235,26 @@
         ${extraTop}
         <article class="match-card ${isOur ? 'our-match' : ''} ${isDone ? 'completed' : ''} ${isOnField ? 'on-field' : ''}">
           <div class="match-top">
-            <div style="display:flex; align-items:center; gap:8px;">
+            <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
               <span class="match-id">${m.id}</span>
-              <span class="match-time" onclick="openScoreModal('${m.id}')" title="Tap for manual override">${getMatchDisplayTime(m)}</span>
+              <span class="match-time" style="cursor:default;">${getMatchDisplayTime(m)}</span>
               ${isOnField ? '<span class="hero-badge" style="background:#16a34a;color:#fff;">🟢 ON FIELD</span>' : (isDone ? '<span style="font-size:0.72rem;color:var(--green);font-weight:700;">✅ Final</span>' : '')}
             </div>
-            <span style="font-size:0.75rem; font-weight:700; color:var(--muted);">Field: ${m.field}</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="background:var(--surface-2); border:1px solid var(--border); padding:2px 8px; border-radius:6px; font-weight:900; font-size:0.82rem;">
+                <span style="color:var(--red-text);">${redScore}</span>
+                <span style="color:var(--muted); margin:0 2px;">:</span>
+                <span style="color:var(--blue-text);">${blueScore}</span>
+              </span>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--muted);">Field: ${m.field}</span>
+            </div>
           </div>
 
           <div class="alliances-grid">
             <div class="alliance-box red">
               <div class="alliance-header">
                 <span>Red Alliance</span>
-                <span class="score-pill ${hasRed ? 'has-score' : ''}">${hasRed ? sc.red : '—'}</span>
+                <span class="score-pill ${hasRed ? 'has-score' : ''}">${redScore}</span>
               </div>
               ${renderTeamChip(m.red1, m.id)}
               ${renderTeamChip(m.red2, m.id)}
@@ -1319,7 +1262,7 @@
             <div class="alliance-box blue">
               <div class="alliance-header">
                 <span>Blue Alliance</span>
-                <span class="score-pill ${hasBlue ? 'has-score' : ''}">${hasBlue ? sc.blue : '—'}</span>
+                <span class="score-pill ${hasBlue ? 'has-score' : ''}">${blueScore}</span>
               </div>
               ${renderTeamChip(m.blue1, m.id)}
               ${renderTeamChip(m.blue2, m.id)}
@@ -1468,8 +1411,12 @@
       renderPickList();
 
       document.getElementById("homeOnFieldMatch").textContent = "Q" + state.onFieldMatchNum;
-      const delay = getMatchDelay(state.onFieldMatchNum);
-      document.getElementById("homeDelaySub").textContent = delay === 0 ? "Schedule on time" : `${delay > 0 ? '+' : ''}${delay}m behind schedule`;
+      const onFieldM = state.matches.find(item => item.num === state.onFieldMatchNum);
+      if (onFieldM) {
+        document.getElementById("homeDelaySub").textContent = `${onFieldM.field} • ${getMatchDisplayTime(onFieldM)}`;
+      } else {
+        document.getElementById("homeDelaySub").textContent = "Live API Sync";
+      }
     }
 
     // SCOUTING MODAL LOGIC
@@ -1559,89 +1506,6 @@
       }
     }
 
-    // SCORE & TIMING MODAL
-    let currentScoreMatchNum = null;
-    function openScoreModal(matchId) {
-      document.getElementById("scoreMatchId").value = matchId;
-      document.getElementById("scoreDialogTitle").textContent = `${matchId} Score & Timing`;
-      const num = parseInt(matchId.replace("Q",""), 10);
-      currentScoreMatchNum = num;
-      const sc = state.scores[matchId] || {};
-      document.getElementById("redScoreInput").value = sc.red !== undefined ? sc.red : "";
-      document.getElementById("blueScoreInput").value = sc.blue !== undefined ? sc.blue : "";
-      updateScoreModalTimeDisplay();
-      document.getElementById("scoreDialog").showModal();
-    }
-
-    function updateScoreModalTimeDisplay() {
-      if (!currentScoreMatchNum) return;
-      const m = state.matches.find(item => item.num === currentScoreMatchNum);
-      if (!m) return;
-      document.getElementById("matchEstTimeDisplay").textContent = getMatchDisplayTime(m);
-      const delay = getMatchDelay(currentScoreMatchNum);
-      document.getElementById("matchDelayBadge").textContent = (delay >= 0 ? "+" : "") + delay + "m";
-      const now = new Date();
-      let hr = now.getHours();
-      const min = now.getMinutes();
-      const ampm = hr >= 12 ? "PM" : "AM";
-      hr = hr % 12 || 12;
-      document.getElementById("clockNowSpan").textContent = `${hr}:${String(min).padStart(2, "0")} ${ampm}`;
-    }
-
-    function stepCurrentMatchDelay(delta) {
-      if (!currentScoreMatchNum) return;
-      setMatchDelay(currentScoreMatchNum, getMatchDelay(currentScoreMatchNum) + delta);
-      updateScoreModalTimeDisplay();
-    }
-
-    function syncCurrentMatchToClock() {
-      if (!currentScoreMatchNum) return;
-      const m = state.matches.find(item => item.num === currentScoreMatchNum);
-      if (!m) return;
-      const now = new Date();
-      const nowMins = now.getHours() * 60 + now.getMinutes();
-      const baseMins = parseMatchTimeMinutes(m.time);
-      setMatchDelay(currentScoreMatchNum, nowMins - baseMins);
-      updateScoreModalTimeDisplay();
-    }
-
-    function resetCurrentMatchDelay() {
-      if (!currentScoreMatchNum) return;
-      delete state.matchDelays[currentScoreMatchNum];
-      localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
-      saveLiveState("matchDelays/" + currentScoreMatchNum, null);
-      updateScoreModalTimeDisplay();
-      renderAll();
-    }
-
-    function saveMatchScore(e) {
-      e.preventDefault();
-      const matchId = document.getElementById("scoreMatchId").value;
-      const redVal = document.getElementById("redScoreInput").value.trim();
-      const blueVal = document.getElementById("blueScoreInput").value.trim();
-      if (!state.scores[matchId]) state.scores[matchId] = {};
-      state.scores[matchId].red = redVal !== "" ? parseInt(redVal, 10) : "";
-      state.scores[matchId].blue = blueVal !== "" ? parseInt(blueVal, 10) : "";
-      state.scores[matchId].done = redVal !== "" && blueVal !== "";
-
-      const num = parseInt(matchId.replace("Q",""), 10);
-      if (num >= state.onFieldMatchNum && num < 53) {
-        state.onFieldMatchNum = num + 1;
-      }
-      localStorage.setItem("vex_scores", JSON.stringify(state.scores));
-      saveLiveState("scores/" + matchId, state.scores[matchId]);
-      saveLiveState("meta", { delayMinutes: state.delayMinutes, onFieldMatchNum: state.onFieldMatchNum });
-      document.getElementById("scoreDialog").close();
-      renderAll();
-    }
-
-    function setMatchOnField() {
-      const matchId = document.getElementById("scoreMatchId").value;
-      const num = parseInt(matchId.replace("Q",""), 10);
-      setMatchOnFieldDirect(num);
-      document.getElementById("scoreDialog").close();
-    }
-
     // FIREBASE RTDB LIVE SYNC
     async function saveLiveState(path, payload) {
       try {
@@ -1670,23 +1534,31 @@
             Object.assign(state.scores, data.scores);
             localStorage.setItem("vex_scores", JSON.stringify(state.scores));
           }
-          if (data.matchDelays) {
-            Object.assign(state.matchDelays, data.matchDelays);
-            localStorage.setItem("vex_match_delays", JSON.stringify(state.matchDelays));
-          }
           if (data.live_event) {
-            if (data.live_event.scores) Object.assign(state.scores, data.live_event.scores);
+            if (data.live_event.scores) {
+              Object.assign(state.scores, data.live_event.scores);
+              localStorage.setItem("vex_scores", JSON.stringify(state.scores));
+            }
             if (data.live_event.rankings) state.rankings = data.live_event.rankings;
-            if (data.live_event.onFieldMatchNum && data.live_event.onFieldMatchNum > state.onFieldMatchNum) {
+            if (data.live_event.onFieldMatchNum) {
               state.onFieldMatchNum = data.live_event.onFieldMatchNum;
+            }
+            if (data.live_event.live_skills) {
+              Object.entries(data.live_event.live_skills).forEach(([tnum, sk]) => {
+                const clean = cleanTeam(tnum);
+                if (TEAM_PROFILES[clean]) {
+                  const tot = (sk.driver || 0) + (sk.programming || 0);
+                  if (tot >= (TEAM_PROFILES[clean].bestSkills || 0)) {
+                    TEAM_PROFILES[clean].bestDriver = sk.driver || 0;
+                    TEAM_PROFILES[clean].bestProg = sk.programming || 0;
+                    TEAM_PROFILES[clean].bestSkills = tot;
+                  }
+                }
+              });
             }
             if (data.live_event.last_sync) {
               document.getElementById("rankingsLastSyncText").textContent = "Synced: " + data.live_event.last_sync;
             }
-          }
-          if (data.meta) {
-            state.delayMinutes = data.meta.delayMinutes || state.delayMinutes;
-            state.onFieldMatchNum = data.meta.onFieldMatchNum || state.onFieldMatchNum;
           }
           renderAll();
         }
