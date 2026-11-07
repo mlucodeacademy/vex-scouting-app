@@ -252,7 +252,24 @@ def sync():
     data_bytes = json.dumps(payload).encode("utf-8")
     put_req = urllib.request.Request(f"{RTDB_URL}/live_event.json", data=data_bytes, method="PUT", headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(put_req) as r:
-        print(f"Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to Firebase! Status: {r.status}")
+        print(f"Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to Firebase! Status: {r.status}", flush=True)
 
 if __name__ == "__main__":
-    sync()
+    import time, argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--loop", type=int, default=0, help="Poll interval in seconds (0 = run once)")
+    parser.add_argument("--duration", type=int, default=0, help="Max total duration in seconds when looping (0 = infinite)")
+    args = parser.parse_args()
+
+    if args.loop > 0:
+        start_ts = time.time()
+        while True:
+            try:
+                sync()
+            except Exception as e:
+                print(f"[WARN] Sync error: {e}", flush=True)
+            if args.duration > 0 and (time.time() - start_ts + args.loop) >= args.duration:
+                break
+            time.sleep(args.loop)
+    else:
+        sync()

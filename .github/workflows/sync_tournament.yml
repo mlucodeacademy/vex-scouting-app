@@ -18,4 +18,4 @@ jobs:
         env:
           ROBOTEVENTS_TOKEN: ${{ secrets.ROBOTEVENTS_TOKEN }}
           TZ: America/Chicago
-        run: python3 sync_tournament.py
+        run: python3 sync_tournament.py --loop 30 --duration 270
