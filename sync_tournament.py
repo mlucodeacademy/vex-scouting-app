@@ -332,38 +332,59 @@ def sync(event_id=None, is_active=True):
             rankings.append(item)
 
     # 7. Push tournament data to Firebase RTDB under /vex_33111c/events/{eid}/
-    # Note: Use PATCH or individual PUTs so that user-submitted /events/{eid}/scouting is never overwritten!
-    event_payload = {
-        "metadata": {
-            "id": eid,
-            "name": ev_meta.get("name"),
-            "sku": ev_meta.get("sku"),
-            "start": ev_meta.get("start"),
-            "end": ev_meta.get("end"),
-            "location": ev_meta.get("location", {})
-        },
-        "last_sync": now_str,
-        "event_id": eid,
-        "onFieldMatchNum": latest_started_num,
-        "matches": live_matches,
-        "scores": scores_dict,
-        "rankings": rankings,
-        "official_rankings": official_rankings,
-        "rankings_official": rankings_official,
-        "live_skills": live_skills,
-        "teams": teams_list,
-        "team_profiles": team_profiles
-    }
+    # Replace individual sub-paths cleanly so user scouting is preserved and arrays don't get merged
+    def rtdb_put(sub_path, data):
+        url = f"{RTDB_URL}/{sub_path}.json"
+        req = urllib.request.Request(url, data=json.dumps(data).encode("utf-8"), headers={"Content-Type": "application/json"}, method="PUT")
+        with urllib.request.urlopen(req) as r:
+            return r.status
 
-    data_bytes = json.dumps(event_payload).encode("utf-8")
-    patch_req = urllib.request.Request(f"{RTDB_URL}/events/{eid}.json", data=data_bytes, method="PATCH", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(patch_req) as r:
-        print(f"[{eid}] Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to /events/{eid}! Status: {r.status}", flush=True)
+    rtdb_put(f"events/{eid}/metadata", {
+        "id": eid,
+        "name": ev_meta.get("name"),
+        "sku": ev_meta.get("sku"),
+        "start": ev_meta.get("start"),
+        "end": ev_meta.get("end"),
+        "location": ev_meta.get("location", {})
+    })
+    rtdb_put(f"events/{eid}/matches", live_matches)
+    rtdb_put(f"events/{eid}/scores", scores_dict)
+    rtdb_put(f"events/{eid}/rankings", rankings)
+    rtdb_put(f"events/{eid}/official_rankings", official_rankings)
+    rtdb_put(f"events/{eid}/rankings_official", rankings_official)
+    rtdb_put(f"events/{eid}/live_skills", live_skills)
+    rtdb_put(f"events/{eid}/teams", teams_list)
+    rtdb_put(f"events/{eid}/team_profiles", team_profiles)
+    rtdb_put(f"events/{eid}/last_sync", now_str)
+    rtdb_put(f"events/{eid}/onFieldMatchNum", latest_started_num)
+    print(f"[{eid}] Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to /events/{eid}!", flush=True)
 
     # If this is the active live tournament, also update /live_event
     if is_active:
-        patch_live = urllib.request.Request(f"{RTDB_URL}/live_event.json", data=data_bytes, method="PATCH", headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(patch_live) as r:
+        event_payload = {
+            "metadata": {
+                "id": eid,
+                "name": ev_meta.get("name"),
+                "sku": ev_meta.get("sku"),
+                "start": ev_meta.get("start"),
+                "end": ev_meta.get("end"),
+                "location": ev_meta.get("location", {})
+            },
+            "last_sync": now_str,
+            "event_id": eid,
+            "onFieldMatchNum": latest_started_num,
+            "matches": live_matches,
+            "scores": scores_dict,
+            "rankings": rankings,
+            "official_rankings": official_rankings,
+            "rankings_official": rankings_official,
+            "live_skills": live_skills,
+            "teams": teams_list,
+            "team_profiles": team_profiles
+        }
+        data_bytes = json.dumps(event_payload).encode("utf-8")
+        put_live = urllib.request.Request(f"{RTDB_URL}/live_event.json", data=data_bytes, method="PUT", headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(put_live) as r:
             print(f"[{eid}] Mirrored to /live_event. Status: {r.status}", flush=True)
 
 if __name__ == "__main__":
