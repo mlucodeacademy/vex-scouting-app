@@ -682,8 +682,11 @@
     <div class="header-top">
       <div class="brand" onclick="navigate('home')">
         <button type="button" class="brand-badge" id="headerTeamBadge" onclick="event.stopPropagation(); openTeamSwitcherModal()" title="Tap to switch active team">33111C ▾</button>
-        <div class="brand-text" onclick="event.stopPropagation(); openEventInfoModal()" title="Tap for Event Location, Host & Details" style="cursor:pointer;">
-          <div class="brand-title" id="eventTitle">Texan Standoff <span style="font-size:0.75rem; opacity:0.8;">ℹ️</span></div>
+        <div class="brand-text" onclick="event.stopPropagation(); openEventSwitcherModal()" title="Tap to switch tournament" style="cursor:pointer;">
+          <div class="brand-title" id="eventTitle">
+            <span id="eventTitleText">Texan Standoff</span>
+            <span style="font-size:0.7rem; font-weight:800; margin-left:3px; background:var(--surface-2); padding:2px 6px; border-radius:6px; border:1px solid var(--border); color:var(--accent);">Events ▾</span>
+          </div>
           <div class="brand-sub">
             <span id="eventDateText" style="font-weight:600;">Nov 7, 2026</span>
             <span>•</span>
@@ -821,31 +824,45 @@
     </button>
   </nav>
 
+  <!-- MODAL -2: TOURNAMENTS & EVENTS SWITCHER -->
+  <dialog id="eventSwitcherDialog" closedby="any" aria-labelledby="eventSwitcherTitle">
+    <div class="dialog-header">
+      <h2 id="eventSwitcherTitle">🏆 Tournaments & Events</h2>
+      <button type="button" class="dialog-close-btn" onclick="document.getElementById('eventSwitcherDialog').close()" aria-label="Close">✕</button>
+    </div>
+    <div style="font-size:0.78rem; color:var(--muted); margin-bottom:12px;">
+      Select an event to view full match schedule, scores, rankings, and scouting dossier:
+    </div>
+    <div id="eventSwitcherList" style="display:flex; flex-direction:column; gap:10px; max-height:65vh; overflow-y:auto; padding-right:4px;"></div>
+    <div style="margin-top:14px; border-top:1px solid var(--border); padding-top:10px; font-size:0.75rem; color:var(--muted); display:flex; justify-content:space-between; align-items:center;">
+      <span>Season: 2026–2027</span>
+      <button type="button" class="mini-btn" onclick="document.getElementById('eventSwitcherDialog').close(); openEventInfoModal();">Venue Info 📍</button>
+    </div>
+  </dialog>
+
   <!-- MODAL -1: EVENT LOCATION & DETAILS -->
   <dialog id="eventInfoDialog" closedby="any" aria-labelledby="eventInfoTitle">
     <div class="dialog-header">
       <h2 id="eventInfoTitle">📍 Event Details & Venue</h2>
       <button type="button" class="dialog-close-btn" onclick="document.getElementById('eventInfoDialog').close()" aria-label="Close">✕</button>
     </div>
-    <div style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
+    <div id="eventInfoBody" style="display:flex; flex-direction:column; gap:10px; font-size:0.84rem;">
       <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px;">
-        <div style="font-size:0.72rem; font-weight:800; color:var(--accent); text-transform:uppercase;">RE-V5RC-26-5031 • Event ID 65031</div>
-        <div style="font-size:1.05rem; font-weight:900; color:var(--text); margin-top:2px;">Texan Standoff</div>
-        <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">VEX V5 Robotics Competition Override: Middle & High School Teams</div>
+        <div style="font-size:0.72rem; font-weight:800; color:var(--accent); text-transform:uppercase;" id="infoSkuText">RE-V5RC-26-5031 • Event ID 65031</div>
+        <div style="font-size:1.05rem; font-weight:900; color:var(--text); margin-top:2px;" id="infoNameText">Texan Standoff</div>
+        <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">VEX V5 Robotics Competition 2026–2027 Season</div>
       </div>
 
       <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:6px;">
-        <div><strong style="color:var(--muted);">🏫 Host / Venue:</strong> <span style="font-weight:800;">Lamar High School</span></div>
-        <div><strong style="color:var(--muted);">📍 Address:</strong> <span>3325 Westheimer Road, Houston, TX 77098</span></div>
-        <div><strong style="color:var(--muted);">📅 Date:</strong> <span>Saturday, Nov 7, 2026</span></div>
-        <div><strong style="color:var(--muted);">🎮 Season:</strong> <span>VEX V5RC 2026-2027: Override (Season 204)</span></div>
-        <div><strong style="color:var(--muted);">🏟️ Format:</strong> <span>Division 1 • 35 Teams • 53 Qual Matches</span></div>
-        <div><strong style="color:var(--muted);">🎯 Competition Fields:</strong> <span>Kirby & Buffalo</span></div>
+        <div><strong style="color:var(--muted);">📍 Location:</strong> <span id="infoLocText">Houston, TX</span></div>
+        <div><strong style="color:var(--muted);">📅 Date:</strong> <span id="infoDateText">Nov 7, 2026</span></div>
+        <div><strong style="color:var(--muted);">👥 Total Teams:</strong> <span id="infoTeamsText">40 Teams</span></div>
+        <div><strong style="color:var(--muted);">🏟️ Total Matches:</strong> <span id="infoMatchesText">63 Matches</span></div>
+        <div><strong style="color:var(--muted);">📋 Scouting Reports:</strong> <span id="infoScoutingText">53 Logged</span></div>
       </div>
 
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;">
-        <a href="https://www.google.com/maps/search/?api=1&query=Lamar+High+School+3325+Westheimer+Road+Houston+TX+77098" target="_blank" rel="noopener" class="full-btn" style="flex:1; text-align:center; text-decoration:none; margin-top:0;">🗺️ Open Google Maps</a>
-        <a href="https://www.robotevents.com/robot-competitions/vex-robotics-competition/RE-V5RC-26-5031.html" target="_blank" rel="noopener" class="mini-btn" style="padding:11px 12px; text-decoration:none; font-weight:800; display:inline-flex; align-items:center;">🌐 RobotEvents Page</a>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;" id="infoLinksRow">
+        <a id="infoRobotEventsLink" href="https://www.robotevents.com/robot-competitions/vex-robotics-competition/RE-V5RC-26-5031.html" target="_blank" rel="noopener" class="mini-btn" style="padding:11px 12px; text-decoration:none; font-weight:800; display:inline-flex; align-items:center; flex:1; justify-content:center;">🌐 RobotEvents Page</a>
       </div>
     </div>
   </dialog>
@@ -857,7 +874,7 @@
       <button type="button" class="dialog-close-btn" onclick="document.getElementById('teamSwitcherDialog').close()" aria-label="Close">✕</button>
     </div>
     <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">
-      Switch the app perspective to any team at Texan Standoff. All schedules, next-up alerts, and rankings will adapt automatically.
+      Switch the app perspective to any team at this tournament. All schedules, next-up alerts, and rankings will adapt automatically.
     </div>
     <input type="search" id="teamSwitcherSearch" class="search-input" style="width:100%; margin-bottom:10px; box-sizing:border-box;" placeholder="Search team # or name (e.g. 33111C, 1412J)..." oninput="renderTeamSwitcherList()" />
     <div id="teamSwitcherList" style="max-height:55vh; overflow-y:auto; display:flex; flex-direction:column; gap:6px;"></div>
@@ -958,23 +975,55 @@
 
   <!-- DATA & SCRIPTS -->
   <script>
-    const DEFAULT_MATCHES = [{"blue1": "67960E", "blue2": "285X", "field": "Kirby", "id": "Q1", "num": 1, "red1": "1221K", "red2": "88077A", "started": "10:21 AM", "time": "9:30 AM"}, {"blue1": "285C", "blue2": "42703A", "field": "Buffalo", "id": "Q2", "num": 2, "red1": "81880A", "red2": "77038V", "started": "10:07 AM", "time": "9:36 AM"}, {"blue1": "42703D", "blue2": "285Z", "field": "Kirby", "id": "Q3", "num": 3, "red1": "7390A", "red2": "56114A", "started": "10:38 AM", "time": "9:42 AM"}, {"blue1": "6079B", "blue2": "58290G", "field": "Buffalo", "id": "Q4", "num": 4, "red1": "1815R", "red2": "1815B", "started": "10:32 AM", "time": "9:48 AM"}, {"blue1": "5763X", "blue2": "1815A", "field": "Kirby", "id": "Q5", "num": 5, "red1": "99008S", "red2": "42703B", "started": "11:00 AM", "time": "9:54 AM"}, {"blue1": "1412J", "blue2": "11770X", "field": "Buffalo", "id": "Q6", "num": 6, "red1": "10015Z", "red2": "1815W", "started": "10:47 AM", "time": "10:00 AM"}, {"blue1": "33111C", "blue2": "11770Y", "field": "Kirby", "id": "Q7", "num": 7, "red1": "56114B", "red2": "1065A", "started": "11:13 AM", "time": "10:06 AM"}, {"blue1": "11770W", "blue2": "42703C", "field": "Buffalo", "id": "Q8", "num": 8, "red1": "11770Z", "red2": "2587K", "started": "11:08 AM", "time": "10:12 AM"}, {"blue1": "1221K", "blue2": "56114A", "field": "Kirby", "id": "Q9", "num": 9, "red1": "5763X", "red2": "6079B", "started": "11:25 AM", "time": "10:18 AM"}, {"blue1": "42703B", "blue2": "88077A", "field": "Buffalo", "id": "Q10", "num": 10, "red1": "58290G", "red2": "1815W", "started": "11:32 AM", "time": "10:24 AM"}, {"blue1": "81880A", "blue2": "7390A", "field": "Kirby", "id": "Q11", "num": 11, "red1": "33111C", "red2": "1815A", "started": "11:37 AM", "time": "10:30 AM"}, {"blue1": "1815B", "blue2": "11770W", "field": "Buffalo", "id": "Q12", "num": 12, "red1": "11770X", "red2": "11770Y", "started": "11:43 AM", "time": "10:36 AM"}, {"blue1": "77038V", "blue2": "56114B", "field": "Kirby", "id": "Q13", "num": 13, "red1": "42703D", "red2": "42703C", "started": "11:47 AM", "time": "10:42 AM"}, {"blue1": "42703A", "blue2": "1412J", "field": "Buffalo", "id": "Q14", "num": 14, "red1": "67960E", "red2": "285Z", "started": "11:54 AM", "time": "10:48 AM"}, {"blue1": "11770Z", "blue2": "99008S", "field": "Kirby", "id": "Q15", "num": 15, "red1": "285X", "red2": "285C", "started": "12:03 PM", "time": "10:54 AM"}, {"blue1": "1815R", "blue2": "10015Z", "field": "Buffalo", "id": "Q16", "num": 16, "red1": "2587K", "red2": "1065A", "started": "12:08 PM", "time": "11:00 AM"}, {"blue1": "1815B", "blue2": "56114A", "field": "Kirby", "id": "Q17", "num": 17, "red1": "33111C", "red2": "77038V", "started": "12:14 PM", "time": "11:06 AM"}, {"blue1": "11770Y", "blue2": "67960E", "field": "Buffalo", "id": "Q18", "num": 18, "red1": "42703C", "red2": "58290G", "started": "12:22 PM", "time": "11:12 AM"}, {"blue1": "56114B", "blue2": "11770Z", "field": "Kirby", "id": "Q19", "num": 19, "red1": "88077A", "red2": "42703A", "started": "12:30 PM", "time": "11:18 AM"}, {"blue1": "1065A", "blue2": "11770X", "field": "Buffalo", "id": "Q20", "num": 20, "red1": "42703D", "red2": "99008S", "started": "12:36 PM", "time": "11:24 AM"}, {"blue1": "285C", "blue2": "42703B", "field": "Kirby", "id": "Q21", "num": 21, "red1": "285Z", "red2": "6079B", "started": "1:12 PM", "time": "11:30 AM"}, {"blue1": "1815W", "blue2": "2587K", "field": "Buffalo", "id": "Q22", "num": 22, "red1": "285X", "red2": "81880A", "started": "1:18 PM", "time": "11:36 AM"}, {"blue1": "1221K", "blue2": "1815A", "field": "Kirby", "id": "Q23", "num": 23, "red1": "11770W", "red2": "10015Z", "started": "1:24 PM", "time": "11:42 AM"}, {"blue1": "1815R", "blue2": "5763X", "field": "Buffalo", "id": "Q24", "num": 24, "red1": "1412J", "red2": "7390A", "started": "1:29 PM", "time": "11:48 AM"}, {"blue1": "33111C", "blue2": "42703D", "field": "Kirby", "id": "Q25", "num": 25, "red1": "42703B", "red2": "11770Z", "started": "1:35 PM", "time": "11:54 AM"}, {"blue1": "2587K", "blue2": "56114A", "field": "Buffalo", "id": "Q26", "num": 26, "red1": "285C", "red2": "56114B", "started": "1:40 PM", "time": "12:45 PM"}, {"blue1": "1815W", "blue2": "1065A", "field": "Kirby", "id": "Q27", "num": 27, "red1": "1221K", "red2": "42703A", "started": "1:46 PM", "time": "12:50 PM"}, {"blue1": "99008S", "blue2": "42703C", "field": "Buffalo", "id": "Q28", "num": 28, "red1": "1412J", "red2": "1815B", "started": "1:51 PM", "time": "12:55 PM"}, {"blue1": "285Z", "blue2": "285X", "field": "Kirby", "id": "Q29", "num": 29, "red1": "11770W", "red2": "5763X", "started": "1:56 PM", "time": "1:00 PM"}, {"blue1": "7390A", "blue2": "10015Z", "field": "Buffalo", "id": "Q30", "num": 30, "red1": "77038V", "red2": "58290G", "started": "2:03 PM", "time": "1:05 PM"}, {"blue1": "6079B", "blue2": "88077A", "field": "Kirby", "id": "Q31", "num": 31, "red1": "11770Y", "red2": "81880A", "started": "2:09 PM", "time": "1:10 PM"}, {"blue1": "1815A", "blue2": "67960E", "field": "Buffalo", "id": "Q32", "num": 32, "red1": "11770X", "red2": "1815R", "started": "2:14 PM", "time": "1:15 PM"}, {"blue1": "42703B", "blue2": "56114B", "field": "Kirby", "id": "Q33", "num": 33, "red1": "285X", "red2": "1412J", "started": "2:19 PM", "time": "1:20 PM"}, {"blue1": "33111C", "blue2": "58290G", "field": "Buffalo", "id": "Q34", "num": 34, "red1": "285C", "red2": "11770W", "started": "2:26 PM", "time": "1:25 PM"}, {"blue1": "42703D", "blue2": "2587K", "field": "Kirby", "id": "Q35", "num": 35, "red1": "5763X", "red2": "11770Y", "started": "2:31 PM", "time": "1:30 PM"}, {"blue1": "81880A", "blue2": "1815B", "field": "Buffalo", "id": "Q36", "num": 36, "red1": "11770Z", "red2": "1221K", "started": "2:36 PM", "time": "1:35 PM"}, {"blue1": "88077A", "blue2": "1065A", "field": "Kirby", "id": "Q37", "num": 37, "red1": "56114A", "red2": "1815A", "started": "2:40 PM", "time": "1:40 PM"}, {"blue1": "77038V", "blue2": "1815W", "field": "Buffalo", "id": "Q38", "num": 38, "red1": "285Z", "red2": "1815R", "started": "2:46 PM", "time": "1:45 PM"}, {"blue1": "42703A", "blue2": "42703C", "field": "Kirby", "id": "Q39", "num": 39, "red1": "7390A", "red2": "11770X", "started": "2:52 PM", "time": "1:50 PM"}, {"blue1": "10015Z", "blue2": "6079B", "field": "Buffalo", "id": "Q40", "num": 40, "red1": "67960E", "red2": "99008S", "started": "2:56 PM", "time": "1:55 PM"}, {"blue1": "58290G", "blue2": "1221K", "field": "Kirby", "id": "Q41", "num": 41, "red1": "42703D", "red2": "1412J", "started": "3:02 PM", "time": "2:00 PM"}, {"blue1": "11770Y", "blue2": "11770Z", "field": "Buffalo", "id": "Q42", "num": 42, "red1": "1815A", "red2": "285Z", "started": "3:09 PM", "time": "2:05 PM"}, {"blue1": "5763X", "blue2": "285C", "field": "Kirby", "id": "Q43", "num": 43, "red1": "1815B", "red2": "88077A", "started": "3:13 PM", "time": "2:10 PM"}, {"blue1": "7390A", "blue2": "99008S", "field": "Buffalo", "id": "Q44", "num": 44, "red1": "56114B", "red2": "1815W", "started": "3:20 PM", "time": "2:15 PM"}, {"blue1": "11770X", "blue2": "77038V", "field": "Kirby", "id": "Q45", "num": 45, "red1": "2587K", "red2": "6079B", "started": "3:25 PM", "time": "2:20 PM"}, {"blue1": "1815R", "blue2": "81880A", "field": "Buffalo", "id": "Q46", "num": 46, "red1": "56114A", "red2": "42703C", "started": "3:30 PM", "time": "2:25 PM"}, {"blue1": "285X", "blue2": "10015Z", "field": "Kirby", "id": "Q47", "num": 47, "red1": "42703A", "red2": "33111C", "started": "3:35 PM", "time": "2:30 PM"}, {"blue1": "11770W", "blue2": "1065A", "field": "Buffalo", "id": "Q48", "num": 48, "red1": "67960E", "red2": "42703B", "started": "3:41 PM", "time": "2:35 PM"}, {"blue1": "42703C", "blue2": "42703B", "field": "TBD", "id": "R16 1-1", "num": 49, "red1": "285Z", "red2": "1412J", "started": "4:23 PM", "time": "TBD"}, {"blue1": "1815R", "blue2": "58290G", "field": "TBD", "id": "R16 2-1", "num": 50, "red1": "5763X", "red2": "99008S", "started": "4:28 PM", "time": "TBD"}, {"blue1": "56114B", "blue2": "11770Y", "field": "TBD", "id": "R16 3-1", "num": 51, "red1": "7390A", "red2": "285C", "started": "4:34 PM", "time": "TBD"}, {"blue1": "81880A", "blue2": "1815A", "field": "TBD", "id": "R16 4-1", "num": 52, "red1": "10015Z", "red2": "33111C", "started": "4:39 PM", "time": "TBD"}, {"blue1": "1815W", "blue2": "42703A", "field": "TBD", "id": "R16 5-1", "num": 53, "red1": "285X", "red2": "6079B", "started": "4:43 PM", "time": "TBD"}, {"blue1": "67960E", "blue2": "2587K", "field": "TBD", "id": "R16 6-1", "num": 54, "red1": "11770W", "red2": "1815B", "started": "4:52 PM", "time": "TBD"}, {"blue1": "77038V", "blue2": "11770Z", "field": "TBD", "id": "R16 7-1", "num": 55, "red1": "56114A", "red2": "1065A", "started": "4:55 PM", "time": "TBD"}, {"blue1": "42703D", "blue2": "1221K", "field": "TBD", "id": "R16 8-1", "num": 56, "red1": "11770X", "red2": "88077A", "started": "5:01 PM", "time": "TBD"}, {"blue1": "5763X", "blue2": "99008S", "field": "TBD", "id": "QF 1-1", "num": 57, "red1": "285Z", "red2": "1412J", "started": "5:07 PM", "time": "TBD"}, {"blue1": "10015Z", "blue2": "33111C", "field": "TBD", "id": "QF 2-1", "num": 58, "red1": "7390A", "red2": "285C", "started": "5:13 PM", "time": "TBD"}, {"blue1": "67960E", "blue2": "2587K", "field": "TBD", "id": "QF 3-1", "num": 59, "red1": "285X", "red2": "6079B", "started": "5:18 PM", "time": "TBD"}, {"blue1": "11770X", "blue2": "88077A", "field": "TBD", "id": "QF 4-1", "num": 60, "red1": "56114A", "red2": "1065A", "started": "5:25 PM", "time": "TBD"}, {"blue1": "10015Z", "blue2": "33111C", "field": "TBD", "id": "SF 1-1", "num": 61, "red1": "285Z", "red2": "1412J", "started": "5:30 PM", "time": "TBD"}, {"blue1": "56114A", "blue2": "1065A", "field": "TBD", "id": "SF 2-1", "num": 62, "red1": "285X", "red2": "6079B", "started": "5:40 PM", "time": "TBD"}, {"blue1": "56114A", "blue2": "1065A", "field": "TBD", "id": "F1", "num": 63, "red1": "285Z", "red2": "1412J", "started": "5:55 PM", "time": "TBD"}];
-    const TEAM_PROFILES = {"285C": {"id": 155746, "name": "DiscoBots Chronos", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 48, "bestProg": 13, "bestSkills": 61}, "285X": {"id": 85351, "name": "DiscoBots X", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 8, "bestProg": 0, "bestSkills": 8}, "285Z": {"id": 85352, "name": "DiscoBots Zephyr", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 38, "bestProg": 28, "bestSkills": 66}, "1065A": {"id": 153404, "name": "Sunny", "robot": "Sunny", "org": "SunnyRobotics", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1221K": {"id": 57138, "name": "The Falconeers", "robot": "", "org": "THE KINKAID SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1412J": {"id": 143954, "name": "BANSHEE!", "robot": "Psycho Frame", "org": "CYPRESS SPRINGS HIGH SCHOOL", "city": "Cypress", "grade": "High School", "bestDriver": 103, "bestProg": 78, "bestSkills": 181}, "1815A": {"id": 73086, "name": "WCS CATaclysm - A", "robot": "Asteroids", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815B": {"id": 51054, "name": "WCS CATaclysm - B", "robot": "Beta", "org": "Westbury Christian School", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815R": {"id": 129903, "name": "WCS CATaclysm - Refrigerator", "robot": "Refrigerator", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815W": {"id": 142344, "name": "WCS CATaclysm - Wombat", "robot": "Wombat", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "2587K": {"id": 17848, "name": "DiscoBots skAIkru", "robot": "Octavia Blake", "org": "LAMAR HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "4232N": {"id": 205256, "name": "Ink", "robot": "Sasha", "org": "Aerodyne Inc.", "city": "East Walpole", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "5763X": {"id": 202142, "name": "Rubicon", "robot": "Vortech\u2019s Redemption", "org": "Rubicon Robotics", "city": "Cypress", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "6079B": {"id": 46843, "name": "BattleRams", "robot": "BattleRams", "org": "Waltrip High School", "city": "Houston", "grade": "High School", "bestDriver": 20, "bestProg": 0, "bestSkills": 20}, "7390A": {"id": 46354, "name": "DiscoBots Absolute Zero", "robot": "mansa musa", "org": "Debakey High School For Health Prof", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "10015Z": {"id": 197518, "name": "Zero Tolerance", "robot": "", "org": "Coughing Baby Robotics", "city": "Spring", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770W": {"id": 176350, "name": "Cherry on Top", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770X": {"id": 176351, "name": "ReIgnition", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Y": {"id": 176352, "name": "Grandma Approved", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Z": {"id": 176353, "name": "Phoenix", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "33111C": {"id": 174158, "name": "RMC", "robot": "Zeta", "org": "Robot Mastery", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703A": {"id": 176346, "name": "The Robot", "robot": "The Robot", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703B": {"id": 176347, "name": "VORTECH", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703C": {"id": 176348, "name": "CTRALTdefeat", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703D": {"id": 176349, "name": "TigerBolts", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "56114A": {"id": 174961, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 78, "bestProg": 18, "bestSkills": 96}, "56114B": {"id": 199994, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "58290G": {"id": 200155, "name": "Awtybots", "robot": "", "org": "The Awty International School", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "67960E": {"id": 188721, "name": "Quantum Eclipse", "robot": "Light", "org": "Parkside Robotics", "city": "Irving", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "77038V": {"id": 127527, "name": "Voltage", "robot": "", "org": "BLANSON CTE HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "81880A": {"id": 198902, "name": "Lone Star Titans", "robot": "Dragon Power", "org": "Sunflower", "city": "Pearland", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "88077A": {"id": 187346, "name": "FutureTech", "robot": "TechDuo", "org": "FutureTech", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437E": {"id": 202033, "name": "TQQ", "robot": "TQQ", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437F": {"id": 202034, "name": "Phantom Menace", "robot": "Phantom Menace", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "99008S": {"id": 185163, "name": "E-Knights", "robot": "Insert Robot Name", "org": "Chill Robotics", "city": "Austin", "grade": "Middle School", "bestDriver": 68, "bestProg": 8, "bestSkills": 76}};
-    const FORM_TEAM_OPTIONS = ["10015Z Zero Tolerance", "1065A Sunny", "11770W Cherry on Top", "11770X ReIgnition", "11770Y Grandma Approved", "11770Z Phoenix", "1221K The Falconeers", "1412J BANSHEE!", "1815A WCS CATaclysm - A", "1815B WCS CATaclysm - B", "1815R WCS CATaclysm - Refrigerator", "1815W WCS CATaclysm - Wombat", "2587K DiscoBots skAIkru", "285C DiscoBots Chronos", "285X DiscoBots X", "285Z DiscoBots Zephyr", "33111C RMC", "4232N Ink", "42703A The Robot", "42703B VORTECH", "42703C CTRALTdefeat", "42703D TigerBolts", "56114A Robo Riders", "56114B Robo Riders", "5763X Rubicon", "58290G Awtybots", "6079B BattleRams", "67960E Quantum Eclipse", "7390A DiscoBots Absolute Zero", "77038V Voltage", "81880A Lone Star Titans", "88077A FutureTech", "89437E TQQ", "89437F Phantom Menace", "99008S E-Knights"];
+    let DEFAULT_MATCHES = [{"blue1": "67960E", "blue2": "285X", "field": "Kirby", "id": "Q1", "num": 1, "red1": "1221K", "red2": "88077A", "started": "10:21 AM", "time": "9:30 AM"}, {"blue1": "285C", "blue2": "42703A", "field": "Buffalo", "id": "Q2", "num": 2, "red1": "81880A", "red2": "77038V", "started": "10:07 AM", "time": "9:36 AM"}, {"blue1": "42703D", "blue2": "285Z", "field": "Kirby", "id": "Q3", "num": 3, "red1": "7390A", "red2": "56114A", "started": "10:38 AM", "time": "9:42 AM"}, {"blue1": "6079B", "blue2": "58290G", "field": "Buffalo", "id": "Q4", "num": 4, "red1": "1815R", "red2": "1815B", "started": "10:32 AM", "time": "9:48 AM"}, {"blue1": "5763X", "blue2": "1815A", "field": "Kirby", "id": "Q5", "num": 5, "red1": "99008S", "red2": "42703B", "started": "11:00 AM", "time": "9:54 AM"}, {"blue1": "1412J", "blue2": "11770X", "field": "Buffalo", "id": "Q6", "num": 6, "red1": "10015Z", "red2": "1815W", "started": "10:47 AM", "time": "10:00 AM"}, {"blue1": "33111C", "blue2": "11770Y", "field": "Kirby", "id": "Q7", "num": 7, "red1": "56114B", "red2": "1065A", "started": "11:13 AM", "time": "10:06 AM"}, {"blue1": "11770W", "blue2": "42703C", "field": "Buffalo", "id": "Q8", "num": 8, "red1": "11770Z", "red2": "2587K", "started": "11:08 AM", "time": "10:12 AM"}, {"blue1": "1221K", "blue2": "56114A", "field": "Kirby", "id": "Q9", "num": 9, "red1": "5763X", "red2": "6079B", "started": "11:25 AM", "time": "10:18 AM"}, {"blue1": "42703B", "blue2": "88077A", "field": "Buffalo", "id": "Q10", "num": 10, "red1": "58290G", "red2": "1815W", "started": "11:32 AM", "time": "10:24 AM"}, {"blue1": "81880A", "blue2": "7390A", "field": "Kirby", "id": "Q11", "num": 11, "red1": "33111C", "red2": "1815A", "started": "11:37 AM", "time": "10:30 AM"}, {"blue1": "1815B", "blue2": "11770W", "field": "Buffalo", "id": "Q12", "num": 12, "red1": "11770X", "red2": "11770Y", "started": "11:43 AM", "time": "10:36 AM"}, {"blue1": "77038V", "blue2": "56114B", "field": "Kirby", "id": "Q13", "num": 13, "red1": "42703D", "red2": "42703C", "started": "11:47 AM", "time": "10:42 AM"}, {"blue1": "42703A", "blue2": "1412J", "field": "Buffalo", "id": "Q14", "num": 14, "red1": "67960E", "red2": "285Z", "started": "11:54 AM", "time": "10:48 AM"}, {"blue1": "11770Z", "blue2": "99008S", "field": "Kirby", "id": "Q15", "num": 15, "red1": "285X", "red2": "285C", "started": "12:03 PM", "time": "10:54 AM"}, {"blue1": "1815R", "blue2": "10015Z", "field": "Buffalo", "id": "Q16", "num": 16, "red1": "2587K", "red2": "1065A", "started": "12:08 PM", "time": "11:00 AM"}, {"blue1": "1815B", "blue2": "56114A", "field": "Kirby", "id": "Q17", "num": 17, "red1": "33111C", "red2": "77038V", "started": "12:14 PM", "time": "11:06 AM"}, {"blue1": "11770Y", "blue2": "67960E", "field": "Buffalo", "id": "Q18", "num": 18, "red1": "42703C", "red2": "58290G", "started": "12:22 PM", "time": "11:12 AM"}, {"blue1": "56114B", "blue2": "11770Z", "field": "Kirby", "id": "Q19", "num": 19, "red1": "88077A", "red2": "42703A", "started": "12:30 PM", "time": "11:18 AM"}, {"blue1": "1065A", "blue2": "11770X", "field": "Buffalo", "id": "Q20", "num": 20, "red1": "42703D", "red2": "99008S", "started": "12:36 PM", "time": "11:24 AM"}, {"blue1": "285C", "blue2": "42703B", "field": "Kirby", "id": "Q21", "num": 21, "red1": "285Z", "red2": "6079B", "started": "1:12 PM", "time": "11:30 AM"}, {"blue1": "1815W", "blue2": "2587K", "field": "Buffalo", "id": "Q22", "num": 22, "red1": "285X", "red2": "81880A", "started": "1:18 PM", "time": "11:36 AM"}, {"blue1": "1221K", "blue2": "1815A", "field": "Kirby", "id": "Q23", "num": 23, "red1": "11770W", "red2": "10015Z", "started": "1:24 PM", "time": "11:42 AM"}, {"blue1": "1815R", "blue2": "5763X", "field": "Buffalo", "id": "Q24", "num": 24, "red1": "1412J", "red2": "7390A", "started": "1:29 PM", "time": "11:48 AM"}, {"blue1": "33111C", "blue2": "42703D", "field": "Kirby", "id": "Q25", "num": 25, "red1": "42703B", "red2": "11770Z", "started": "1:35 PM", "time": "11:54 AM"}, {"blue1": "2587K", "blue2": "56114A", "field": "Buffalo", "id": "Q26", "num": 26, "red1": "285C", "red2": "56114B", "started": "1:40 PM", "time": "12:45 PM"}, {"blue1": "1815W", "blue2": "1065A", "field": "Kirby", "id": "Q27", "num": 27, "red1": "1221K", "red2": "42703A", "started": "1:46 PM", "time": "12:50 PM"}, {"blue1": "99008S", "blue2": "42703C", "field": "Buffalo", "id": "Q28", "num": 28, "red1": "1412J", "red2": "1815B", "started": "1:51 PM", "time": "12:55 PM"}, {"blue1": "285Z", "blue2": "285X", "field": "Kirby", "id": "Q29", "num": 29, "red1": "11770W", "red2": "5763X", "started": "1:56 PM", "time": "1:00 PM"}, {"blue1": "7390A", "blue2": "10015Z", "field": "Buffalo", "id": "Q30", "num": 30, "red1": "77038V", "red2": "58290G", "started": "2:03 PM", "time": "1:05 PM"}, {"blue1": "6079B", "blue2": "88077A", "field": "Kirby", "id": "Q31", "num": 31, "red1": "11770Y", "red2": "81880A", "started": "2:09 PM", "time": "1:10 PM"}, {"blue1": "1815A", "blue2": "67960E", "field": "Buffalo", "id": "Q32", "num": 32, "red1": "11770X", "red2": "1815R", "started": "2:14 PM", "time": "1:15 PM"}, {"blue1": "42703B", "blue2": "56114B", "field": "Kirby", "id": "Q33", "num": 33, "red1": "285X", "red2": "1412J", "started": "2:19 PM", "time": "1:20 PM"}, {"blue1": "33111C", "blue2": "58290G", "field": "Buffalo", "id": "Q34", "num": 34, "red1": "285C", "red2": "11770W", "started": "2:26 PM", "time": "1:25 PM"}, {"blue1": "42703D", "blue2": "2587K", "field": "Kirby", "id": "Q35", "num": 35, "red1": "5763X", "red2": "11770Y", "started": "2:31 PM", "time": "1:30 PM"}, {"blue1": "81880A", "blue2": "1815B", "field": "Buffalo", "id": "Q36", "num": 36, "red1": "11770Z", "red2": "1221K", "started": "2:36 PM", "time": "1:35 PM"}, {"blue1": "88077A", "blue2": "1065A", "field": "Kirby", "id": "Q37", "num": 37, "red1": "56114A", "red2": "1815A", "started": "2:40 PM", "time": "1:40 PM"}, {"blue1": "77038V", "blue2": "1815W", "field": "Buffalo", "id": "Q38", "num": 38, "red1": "285Z", "red2": "1815R", "started": "2:46 PM", "time": "1:45 PM"}, {"blue1": "42703A", "blue2": "42703C", "field": "Kirby", "id": "Q39", "num": 39, "red1": "7390A", "red2": "11770X", "started": "2:52 PM", "time": "1:50 PM"}, {"blue1": "10015Z", "blue2": "6079B", "field": "Buffalo", "id": "Q40", "num": 40, "red1": "67960E", "red2": "99008S", "started": "2:56 PM", "time": "1:55 PM"}, {"blue1": "58290G", "blue2": "1221K", "field": "Kirby", "id": "Q41", "num": 41, "red1": "42703D", "red2": "1412J", "started": "3:02 PM", "time": "2:00 PM"}, {"blue1": "11770Y", "blue2": "11770Z", "field": "Buffalo", "id": "Q42", "num": 42, "red1": "1815A", "red2": "285Z", "started": "3:09 PM", "time": "2:05 PM"}, {"blue1": "5763X", "blue2": "285C", "field": "Kirby", "id": "Q43", "num": 43, "red1": "1815B", "red2": "88077A", "started": "3:13 PM", "time": "2:10 PM"}, {"blue1": "7390A", "blue2": "99008S", "field": "Buffalo", "id": "Q44", "num": 44, "red1": "56114B", "red2": "1815W", "started": "3:20 PM", "time": "2:15 PM"}, {"blue1": "11770X", "blue2": "77038V", "field": "Kirby", "id": "Q45", "num": 45, "red1": "2587K", "red2": "6079B", "started": "3:25 PM", "time": "2:20 PM"}, {"blue1": "1815R", "blue2": "81880A", "field": "Buffalo", "id": "Q46", "num": 46, "red1": "56114A", "red2": "42703C", "started": "3:30 PM", "time": "2:25 PM"}, {"blue1": "285X", "blue2": "10015Z", "field": "Kirby", "id": "Q47", "num": 47, "red1": "42703A", "red2": "33111C", "started": "3:35 PM", "time": "2:30 PM"}, {"blue1": "11770W", "blue2": "1065A", "field": "Buffalo", "id": "Q48", "num": 48, "red1": "67960E", "red2": "42703B", "started": "3:41 PM", "time": "2:35 PM"}, {"blue1": "42703C", "blue2": "42703B", "field": "TBD", "id": "R16 1-1", "num": 49, "red1": "285Z", "red2": "1412J", "started": "4:23 PM", "time": "TBD"}, {"blue1": "1815R", "blue2": "58290G", "field": "TBD", "id": "R16 2-1", "num": 50, "red1": "5763X", "red2": "99008S", "started": "4:28 PM", "time": "TBD"}, {"blue1": "56114B", "blue2": "11770Y", "field": "TBD", "id": "R16 3-1", "num": 51, "red1": "7390A", "red2": "285C", "started": "4:34 PM", "time": "TBD"}, {"blue1": "81880A", "blue2": "1815A", "field": "TBD", "id": "R16 4-1", "num": 52, "red1": "10015Z", "red2": "33111C", "started": "4:39 PM", "time": "TBD"}, {"blue1": "1815W", "blue2": "42703A", "field": "TBD", "id": "R16 5-1", "num": 53, "red1": "285X", "red2": "6079B", "started": "4:43 PM", "time": "TBD"}, {"blue1": "67960E", "blue2": "2587K", "field": "TBD", "id": "R16 6-1", "num": 54, "red1": "11770W", "red2": "1815B", "started": "4:52 PM", "time": "TBD"}, {"blue1": "77038V", "blue2": "11770Z", "field": "TBD", "id": "R16 7-1", "num": 55, "red1": "56114A", "red2": "1065A", "started": "4:55 PM", "time": "TBD"}, {"blue1": "42703D", "blue2": "1221K", "field": "TBD", "id": "R16 8-1", "num": 56, "red1": "11770X", "red2": "88077A", "started": "5:01 PM", "time": "TBD"}, {"blue1": "5763X", "blue2": "99008S", "field": "TBD", "id": "QF 1-1", "num": 57, "red1": "285Z", "red2": "1412J", "started": "5:07 PM", "time": "TBD"}, {"blue1": "10015Z", "blue2": "33111C", "field": "TBD", "id": "QF 2-1", "num": 58, "red1": "7390A", "red2": "285C", "started": "5:13 PM", "time": "TBD"}, {"blue1": "67960E", "blue2": "2587K", "field": "TBD", "id": "QF 3-1", "num": 59, "red1": "285X", "red2": "6079B", "started": "5:18 PM", "time": "TBD"}, {"blue1": "11770X", "blue2": "88077A", "field": "TBD", "id": "QF 4-1", "num": 60, "red1": "56114A", "red2": "1065A", "started": "5:25 PM", "time": "TBD"}, {"blue1": "10015Z", "blue2": "33111C", "field": "TBD", "id": "SF 1-1", "num": 61, "red1": "285Z", "red2": "1412J", "started": "5:30 PM", "time": "TBD"}, {"blue1": "56114A", "blue2": "1065A", "field": "TBD", "id": "SF 2-1", "num": 62, "red1": "285X", "red2": "6079B", "started": "5:40 PM", "time": "TBD"}, {"blue1": "56114A", "blue2": "1065A", "field": "TBD", "id": "F1", "num": 63, "red1": "285Z", "red2": "1412J", "started": "5:55 PM", "time": "TBD"}];
+    let TEAM_PROFILES = {"285C": {"id": 155746, "name": "DiscoBots Chronos", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 48, "bestProg": 13, "bestSkills": 61}, "285X": {"id": 85351, "name": "DiscoBots X", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 8, "bestProg": 0, "bestSkills": 8}, "285Z": {"id": 85352, "name": "DiscoBots Zephyr", "robot": "", "org": "Carnegie Vanguard HS", "city": "Houston", "grade": "High School", "bestDriver": 38, "bestProg": 28, "bestSkills": 66}, "1065A": {"id": 153404, "name": "Sunny", "robot": "Sunny", "org": "SunnyRobotics", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1221K": {"id": 57138, "name": "The Falconeers", "robot": "", "org": "THE KINKAID SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1412J": {"id": 143954, "name": "BANSHEE!", "robot": "Psycho Frame", "org": "CYPRESS SPRINGS HIGH SCHOOL", "city": "Cypress", "grade": "High School", "bestDriver": 103, "bestProg": 78, "bestSkills": 181}, "1815A": {"id": 73086, "name": "WCS CATaclysm - A", "robot": "Asteroids", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815B": {"id": 51054, "name": "WCS CATaclysm - B", "robot": "Beta", "org": "Westbury Christian School", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815R": {"id": 129903, "name": "WCS CATaclysm - Refrigerator", "robot": "Refrigerator", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "1815W": {"id": 142344, "name": "WCS CATaclysm - Wombat", "robot": "Wombat", "org": "WESTBURY CHRISTIAN SCHOOL", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "2587K": {"id": 17848, "name": "DiscoBots skAIkru", "robot": "Octavia Blake", "org": "LAMAR HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "4232N": {"id": 205256, "name": "Ink", "robot": "Sasha", "org": "Aerodyne Inc.", "city": "East Walpole", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "5763X": {"id": 202142, "name": "Rubicon", "robot": "Vortech\u2019s Redemption", "org": "Rubicon Robotics", "city": "Cypress", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "6079B": {"id": 46843, "name": "BattleRams", "robot": "BattleRams", "org": "Waltrip High School", "city": "Houston", "grade": "High School", "bestDriver": 20, "bestProg": 0, "bestSkills": 20}, "7390A": {"id": 46354, "name": "DiscoBots Absolute Zero", "robot": "mansa musa", "org": "Debakey High School For Health Prof", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "10015Z": {"id": 197518, "name": "Zero Tolerance", "robot": "", "org": "Coughing Baby Robotics", "city": "Spring", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770W": {"id": 176350, "name": "Cherry on Top", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770X": {"id": 176351, "name": "ReIgnition", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Y": {"id": 176352, "name": "Grandma Approved", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "11770Z": {"id": 176353, "name": "Phoenix", "robot": "", "org": "WILLOW WOOD J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "33111C": {"id": 174158, "name": "RMC", "robot": "Zeta", "org": "Robot Mastery", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703A": {"id": 176346, "name": "The Robot", "robot": "The Robot", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703B": {"id": 176347, "name": "VORTECH", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703C": {"id": 176348, "name": "CTRALTdefeat", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "42703D": {"id": 176349, "name": "TigerBolts", "robot": "", "org": "GRAND LAKES J H", "city": "Tomball", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "56114A": {"id": 174961, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 78, "bestProg": 18, "bestSkills": 96}, "56114B": {"id": 199994, "name": "Robo Riders", "robot": "Midnight", "org": "ROOSEVELT HIGH SCHOOL", "city": "San Antonio", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "58290G": {"id": 200155, "name": "Awtybots", "robot": "", "org": "The Awty International School", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "67960E": {"id": 188721, "name": "Quantum Eclipse", "robot": "Light", "org": "Parkside Robotics", "city": "Irving", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "77038V": {"id": 127527, "name": "Voltage", "robot": "", "org": "BLANSON CTE HIGH SCHOOL", "city": "Houston", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "81880A": {"id": 198902, "name": "Lone Star Titans", "robot": "Dragon Power", "org": "Sunflower", "city": "Pearland", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "88077A": {"id": 187346, "name": "FutureTech", "robot": "TechDuo", "org": "FutureTech", "city": "Houston", "grade": "Middle School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437E": {"id": 202033, "name": "TQQ", "robot": "TQQ", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "89437F": {"id": 202034, "name": "Phantom Menace", "robot": "Phantom Menace", "org": "HARGRAVE HIGH SCHOOL", "city": "Huffman", "grade": "High School", "bestDriver": 0, "bestProg": 0, "bestSkills": 0}, "99008S": {"id": 185163, "name": "E-Knights", "robot": "Insert Robot Name", "org": "Chill Robotics", "city": "Austin", "grade": "Middle School", "bestDriver": 68, "bestProg": 8, "bestSkills": 76}};
+    let FORM_TEAM_OPTIONS = ["10015Z Zero Tolerance", "1065A Sunny", "11770W Cherry on Top", "11770X ReIgnition", "11770Y Grandma Approved", "11770Z Phoenix", "1221K The Falconeers", "1412J BANSHEE!", "1815A WCS CATaclysm - A", "1815B WCS CATaclysm - B", "1815R WCS CATaclysm - Refrigerator", "1815W WCS CATaclysm - Wombat", "2587K DiscoBots skAIkru", "285C DiscoBots Chronos", "285X DiscoBots X", "285Z DiscoBots Zephyr", "33111C RMC", "4232N Ink", "42703A The Robot", "42703B VORTECH", "42703C CTRALTdefeat", "42703D TigerBolts", "56114A Robo Riders", "56114B Robo Riders", "5763X Rubicon", "58290G Awtybots", "6079B BattleRams", "67960E Quantum Eclipse", "7390A DiscoBots Absolute Zero", "77038V Voltage", "81880A Lone Star Titans", "88077A FutureTech", "89437E TQQ", "89437F Phantom Menace", "99008S E-Knights"];
     const RTDB_URL = "https://my-project-1524591195518-default-rtdb.firebaseio.com/vex_33111c";
     const GOOGLE_FORM_ACTION = "https://docs.google.com/forms/d/e/1FAIpQLSdwNt6qgAiVjDCJENCsS-nvZEpEM_lE00ivLVH9KuKMEnDtsw/formResponse";
 
-    // Tournament LocalStorage Scoping Key
-    const CURRENT_TOURNAMENT_ID = "texan_standoff_20261107_v6";
-    if (localStorage.getItem("vex_current_tournament_id") !== CURRENT_TOURNAMENT_ID) {
-      localStorage.setItem("vex_current_tournament_id", CURRENT_TOURNAMENT_ID);
-      localStorage.removeItem("vex_custom_matches");
-      localStorage.removeItem("vex_scores");
-      localStorage.removeItem("vex_match_delays");
-      localStorage.removeItem("vex_scouting");
-    }
+    const DEFAULT_EVENTS_LIST = [
+      {
+        id: 65031,
+        sku: "RE-V5RC-26-5031",
+        name: "Texan Standoff (Houston TX)",
+        short_name: "Texan Standoff",
+        date: "Nov 7, 2026",
+        status: "active",
+        location: "Houston, TX"
+      },
+      {
+        id: 61615,
+        sku: "RE-V5RC-25-1615",
+        name: "Texas Halloween Madness (Houston TX)",
+        short_name: "Halloween Madness",
+        date: "Oct 24, 2026",
+        status: "completed",
+        location: "Houston, TX"
+      },
+      {
+        id: 64952,
+        sku: "RE-V5RC-26-4952",
+        name: "Sunshine Showdown Signature Event (Orlando FL)",
+        short_name: "Sunshine Showdown",
+        date: "Dec 27–29, 2026",
+        status: "upcoming",
+        location: "Orlando, FL"
+      },
+      {
+        id: 64639,
+        sku: "RE-V5RC-26-4639",
+        name: "Moody Mania (Galveston TX)",
+        short_name: "Moody Mania",
+        date: "Jan 2, 2027",
+        status: "upcoming",
+        location: "Galveston, TX"
+      }
+    ];
 
     // State
+    const urlEventParam = new URLSearchParams(window.location.search).get("event");
+    const initialEventId = Number(urlEventParam || localStorage.getItem("vex_current_event_id") || 65031);
+
     const urlTeamParam = new URLSearchParams(window.location.search).get("team");
     const savedFocusTeam = (localStorage.getItem("vex_focus_team") || "").toUpperCase();
     const initialFocusTeam = (urlTeamParam && TEAM_PROFILES[urlTeamParam.toUpperCase()])
@@ -990,6 +1039,9 @@
 
     let state = {
       currentView: "home",
+      currentEventId: initialEventId,
+      eventsList: DEFAULT_EVENTS_LIST,
+      metadata: {},
       focusTeam: initialFocusTeam,
       submitter: localStorage.getItem("vex_submitter") || "Andrew",
       customScoutName: localStorage.getItem("vex_custom_scout_name") || "",
@@ -1012,10 +1064,149 @@
 
     // EVENT INFO MODAL
     function openEventInfoModal() {
+      updateEventInfoModal();
       document.getElementById("eventInfoDialog").showModal();
     }
 
-    // ACTIVE TEAM SWITCHER
+    function updateEventInfoModal() {
+      const ev = (state.eventsList || []).find(e => e.id === state.currentEventId) || state.metadata || {};
+      const sku = ev.sku || (state.metadata && state.metadata.sku) || "";
+      const name = ev.name || (state.metadata && state.metadata.name) || "Texan Standoff";
+      const loc = ev.location || (state.metadata && state.metadata.location) || {};
+      const city = typeof loc === "string" ? loc : (loc.city ? `${loc.venue ? loc.venue + ', ' : ''}${loc.city}${loc.region ? ', ' + loc.region : ''}` : "Houston, TX");
+
+      const skuEl = document.getElementById("infoSkuText");
+      if (skuEl) skuEl.textContent = `${sku || 'RE-V5RC'} • Event ID ${state.currentEventId}`;
+      const nameEl = document.getElementById("infoNameText");
+      if (nameEl) nameEl.textContent = name;
+      const locEl = document.getElementById("infoLocText");
+      if (locEl) locEl.textContent = city;
+      const dateEl = document.getElementById("infoDateText");
+      if (dateEl) dateEl.textContent = ev.date || (state.metadata && state.metadata.start ? state.metadata.start.split("T")[0] : "Season 2026-2027");
+      const teamsEl = document.getElementById("infoTeamsText");
+      if (teamsEl) teamsEl.textContent = `${Object.keys(TEAM_PROFILES).length} Teams`;
+      const matchesEl = document.getElementById("infoMatchesText");
+      if (matchesEl) matchesEl.textContent = `${state.matches.length} Matches`;
+      const scEl = document.getElementById("infoScoutingText");
+      if (scEl) scEl.textContent = `${Object.keys(state.scouting).length} Logged`;
+      const linkEl = document.getElementById("infoRobotEventsLink");
+      if (linkEl && sku) {
+        linkEl.href = `https://www.robotevents.com/robot-competitions/vex-robotics-competition/${sku}.html`;
+      }
+    }
+
+    // EVENT SWITCHER MODAL
+    function openEventSwitcherModal() {
+      renderEventSwitcherList();
+      document.getElementById("eventSwitcherDialog").showModal();
+    }
+
+    function renderEventSwitcherList() {
+      const container = document.getElementById("eventSwitcherList");
+      if (!container) return;
+      const list = state.eventsList || [];
+      container.innerHTML = list.map(ev => {
+        const isCurrent = ev.id === state.currentEventId;
+        let badgeClass = "scout-badge";
+        let badgeText = "Upcoming";
+        if (ev.status === "completed") {
+          badgeText = "📜 Completed";
+        } else if (ev.status === "active" || ev.id === 65031) {
+          badgeClass = "scout-badge green";
+          badgeText = "🟢 Live / Active";
+        }
+        return `
+          <div onclick="switchEvent(${ev.id})" style="border:1px solid ${isCurrent ? 'var(--accent)' : 'var(--border)'}; background:${isCurrent ? 'light-dark(rgba(234,88,12,0.1), rgba(249,115,22,0.16))' : 'var(--surface-2)'}; border-radius:12px; padding:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color 0.15s ease;">
+            <div>
+              <div style="font-weight:900; font-size:0.95rem; color:var(--text); display:flex; align-items:center; gap:6px;">
+                <span>${ev.name || ev.short_name}</span>
+              </div>
+              <div style="font-size:0.75rem; color:var(--muted); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;">
+                <span>📅 ${ev.date || 'TBD'}</span>
+                <span>📍 ${ev.location || ''}</span>
+                <span>SKU: ${ev.sku || ''}</span>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; min-width:85px;">
+              <span class="${badgeClass}" style="font-size:0.72rem;">${badgeText}</span>
+              ${isCurrent ? '<span style="color:var(--accent); font-weight:900; font-size:0.78rem;">✓ Active</span>' : ''}
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function switchEvent(eventId) {
+      state.currentEventId = Number(eventId);
+      localStorage.setItem("vex_current_event_id", String(eventId));
+
+      const u = new URL(window.location);
+      u.searchParams.set("event", eventId);
+      window.history.replaceState({}, "", u);
+
+      const dlg = document.getElementById("eventSwitcherDialog");
+      if (dlg && dlg.open) dlg.close();
+
+      updateHeaderEventInfo();
+      document.getElementById("syncStatusText").textContent = "Loading Event...";
+      await loadEventData(eventId);
+      renderAll();
+    }
+
+    function updateHeaderEventInfo() {
+      const ev = (state.eventsList || []).find(e => e.id === state.currentEventId) || {};
+      const titleEl = document.getElementById("eventTitleText");
+      if (titleEl) titleEl.textContent = ev.short_name || ev.name || `Event ${state.currentEventId}`;
+      const dateEl = document.getElementById("eventDateText");
+      if (dateEl) dateEl.textContent = ev.date || "";
+    }
+
+    function populateScoutTeamSelect() {
+      const scoutSel = document.getElementById("scoutTeamSelect");
+      if (!scoutSel) return;
+      const nums = Object.keys(TEAM_PROFILES).sort();
+      FORM_TEAM_OPTIONS = nums.map(num => `${num} ${TEAM_PROFILES[num].name || ''}`);
+      scoutSel.innerHTML = FORM_TEAM_OPTIONS.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+    }
+
+    async function loadEventData(eventId) {
+      try {
+        const res = await fetch(`${RTDB_URL}/events/${eventId}.json`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data) {
+            if (data.metadata) state.metadata = data.metadata;
+            if (Array.isArray(data.matches) && data.matches.length > 0) {
+              state.matches = data.matches;
+            } else {
+              state.matches = [];
+            }
+            state.scores = data.scores || {};
+            state.rankings = data.rankings || [];
+            state.officialRankings = data.official_rankings || [];
+            state.rankingsOfficial = Boolean(data.rankings_official);
+            state.onFieldMatchNum = data.onFieldMatchNum || 1;
+            state.scouting = data.scouting || {};
+
+            if (data.team_profiles && Object.keys(data.team_profiles).length > 0) {
+              TEAM_PROFILES = data.team_profiles;
+            }
+            populateScoutTeamSelect();
+            updateHeaderEventInfo();
+            updateEventInfoModal();
+            document.getElementById("syncStatusText").textContent = "Live Synced";
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not fetch /events/" + eventId, e);
+      }
+
+      if (Number(eventId) === 65031) {
+        await pullLiveState();
+      }
+    }
+
     function openTeamSwitcherModal() {
       const searchInput = document.getElementById("teamSwitcherSearch");
       if (searchInput) searchInput.value = "";
@@ -1572,7 +1763,8 @@
     }
 
     function renderAll() {
-      document.title = `${state.focusTeam} VEX Hub • Texan Standoff`;
+      const curEv = (state.eventsList || []).find(e => e.id === state.currentEventId) || {};
+      document.title = `${state.focusTeam} VEX Hub • ${curEv.short_name || 'Event'}`;
       const badgeEl = document.getElementById("headerTeamBadge");
       if (badgeEl) badgeEl.textContent = `${state.focusTeam} ▾`;
       const myDescEl = document.getElementById("homeMyDesc");
@@ -1803,13 +1995,18 @@
       renderAll();
       document.getElementById("scoutDialog").close();
 
-      saveLiveState("scouting/" + id, entry);
+      saveLiveState(`events/${state.currentEventId}/scouting/` + id, entry);
+      if (state.currentEventId === 65031) {
+        saveLiveState("scouting/" + id, entry);
+      }
 
       try {
+        const ev = (state.eventsList || []).find(e => e.id === state.currentEventId) || {};
+        const evTag = ev.short_name ? `[${ev.short_name}] ` : "";
         const formSubmitter = state.submitter === "Other" ? "Other" : finalSubmitter;
         const formComment = state.submitter === "Other"
-          ? (comment ? `[Scout: ${finalSubmitter}] ${comment}` : `[Scout: ${finalSubmitter}]`)
-          : comment;
+          ? (comment ? `${evTag}[Scout: ${finalSubmitter}] ${comment}` : `${evTag}[Scout: ${finalSubmitter}]`)
+          : `${evTag}${comment}`;
 
         const formData = new URLSearchParams();
         formData.append("entry.458463111", formSubmitter);
@@ -1849,57 +2046,59 @@
 
     async function pullLiveState() {
       try {
-        const res = await fetch(`${RTDB_URL}.json`);
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data) {
-          if (data.scouting) {
-            state.scouting = data.scouting;
-            localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
-          }
-          if (data.scouters) {
-            state.scouters = data.scouters;
-            localStorage.setItem("vex_scouters", JSON.stringify(state.scouters));
-          }
-          if (data.live_event) {
-            if (Array.isArray(data.live_event.matches) && data.live_event.matches.length > 0) {
-              state.matches = data.live_event.matches;
-            }
-            state.scores = data.live_event.scores || {};
-            localStorage.setItem("vex_scores", JSON.stringify(state.scores));
-            if (data.live_event.rankings) {
-              state.rankings = data.live_event.rankings;
-              localStorage.setItem("vex_rankings", JSON.stringify(state.rankings));
-            }
-            if (data.live_event.official_rankings) {
-              state.officialRankings = data.live_event.official_rankings;
-              localStorage.setItem("vex_official_rankings", JSON.stringify(state.officialRankings));
-            }
-            if (data.live_event.rankings_official !== undefined) {
-              state.rankingsOfficial = Boolean(data.live_event.rankings_official);
-              localStorage.setItem("vex_rankings_official", String(state.rankingsOfficial));
-            }
-            if (data.live_event.onFieldMatchNum) {
-              state.onFieldMatchNum = data.live_event.onFieldMatchNum;
-            }
-            if (data.live_event.live_skills) {
-              Object.entries(data.live_event.live_skills).forEach(([tnum, sk]) => {
-                const clean = cleanTeam(tnum);
-                if (TEAM_PROFILES[clean]) {
-                  const tot = (sk.driver || 0) + (sk.programming || 0);
-                  if (tot >= (TEAM_PROFILES[clean].bestSkills || 0)) {
-                    TEAM_PROFILES[clean].bestDriver = sk.driver || 0;
-                    TEAM_PROFILES[clean].bestProg = sk.programming || 0;
-                    TEAM_PROFILES[clean].bestSkills = tot;
-                  }
-                }
-              });
-            }
-            if (data.live_event.last_sync) {
-              document.getElementById("rankingsLastSyncText").textContent = "Synced: " + data.live_event.last_sync;
+        try {
+          const elRes = await fetch(`${RTDB_URL}/events_list.json`);
+          if (elRes.ok) {
+            const elData = await elRes.json();
+            if (Array.isArray(elData) && elData.length > 0) {
+              state.eventsList = elData;
             }
           }
-          renderAll();
+        } catch (_) {}
+
+        const res = await fetch(`${RTDB_URL}/events/${state.currentEventId}.json`);
+        if (res.ok) {
+          const evData = await res.json();
+          if (evData) {
+            if (evData.metadata) state.metadata = evData.metadata;
+            if (Array.isArray(evData.matches) && evData.matches.length > 0) {
+              state.matches = evData.matches;
+            }
+            state.scores = evData.scores || {};
+            if (evData.rankings) state.rankings = evData.rankings;
+            if (evData.official_rankings) state.officialRankings = evData.official_rankings;
+            if (evData.rankings_official !== undefined) state.rankingsOfficial = Boolean(evData.rankings_official);
+            if (evData.onFieldMatchNum) state.onFieldMatchNum = evData.onFieldMatchNum;
+            if (evData.scouting) state.scouting = evData.scouting;
+            if (evData.team_profiles && Object.keys(evData.team_profiles).length > 0) {
+              TEAM_PROFILES = evData.team_profiles;
+              populateScoutTeamSelect();
+            }
+            if (evData.last_sync) {
+              const syncEl = document.getElementById("rankingsLastSyncText");
+              if (syncEl) syncEl.textContent = "Synced: " + evData.last_sync;
+            }
+            updateHeaderEventInfo();
+            renderAll();
+            document.getElementById("syncStatusText").textContent = "Live Synced";
+            return;
+          }
+        }
+
+        if (state.currentEventId === 65031) {
+          const fallbackRes = await fetch(`${RTDB_URL}.json`);
+          if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
+            if (data && data.live_event) {
+              if (Array.isArray(data.live_event.matches) && data.live_event.matches.length > 0) {
+                state.matches = data.live_event.matches;
+              }
+              state.scores = data.live_event.scores || {};
+              if (data.live_event.rankings) state.rankings = data.live_event.rankings;
+              if (data.scouting) state.scouting = data.scouting;
+              renderAll();
+            }
+          }
         }
         document.getElementById("syncStatusText").textContent = "Live Synced";
       } catch (e) {
@@ -1922,12 +2121,14 @@
       const blob = new Blob([csv], { type: "text/csv" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = "texan_standoff_33111c_scouting.csv";
+      const ev = (state.eventsList || []).find(e => e.id === state.currentEventId) || {};
+      const evName = (ev.short_name || `event_${state.currentEventId}`).toLowerCase().replace(/\s+/g, "_");
+      a.download = `vex_33111c_${evName}_scouting.csv`;
       a.click();
     }
 
     function getShareAppUrl() {
-      return `${window.location.origin}/?team=${encodeURIComponent(state.focusTeam)}`;
+      return `${window.location.origin}/?event=${state.currentEventId}&team=${encodeURIComponent(state.focusTeam)}`;
     }
 
     function openShareModal() {
@@ -1964,11 +2165,13 @@
       document.getElementById("themeToggleBtn").textContent = isDark ? "☀️" : "🌙";
     }
 
-    function init() {
+    async function init() {
       updateThemeBtn();
-      const scoutSel = document.getElementById("scoutTeamSelect");
-      scoutSel.innerHTML = FORM_TEAM_OPTIONS.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+      populateScoutTeamSelect();
       initRatingRows();
+
+      updateHeaderEventInfo();
+      updateEventInfoModal();
 
       const initialHash = window.location.hash.replace("#/", "");
       if (initialHash && ["home", "my", "all", "rankings", "scout"].includes(initialHash)) {
@@ -1976,6 +2179,10 @@
       } else {
         navigate("home");
       }
+
+      await loadEventData(state.currentEventId);
+      renderAll();
+      setInterval(pullLiveState, 30000);
 
       pullLiveState();
       setInterval(pullLiveState, 6000);

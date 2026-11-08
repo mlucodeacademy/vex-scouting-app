@@ -114,54 +114,116 @@ def round_sort_key(m):
     rnd_order = {1: 0, 2: 1, 6: 2, 3: 3, 4: 4, 5: 5}.get(m.get("round", 2), 9)
     return (rnd_order, m.get("instance", 1), m.get("matchnum", 0))
 
-def sync():
+def sync(event_id=None, is_active=True):
+    eid = event_id or EVENT_ID
+    ev_tz = derive_event_timezone(eid)
     now_str = datetime.datetime.now().strftime("%I:%M:%S %p")
-    print(f"[{now_str}] Syncing from RobotEvents API for Event {EVENT_ID}...")
-    
+    print(f"[{now_str}] Syncing from RobotEvents API for Event {eid}...")
+
+    # Fetch event metadata to get divisions
+    try:
+        ev_meta = api_get(f"/events/{eid}")
+    except Exception as e:
+        print(f"[ERROR] Could not fetch metadata for event {eid}: {e}")
+        return
+
+    divisions = ev_meta.get("divisions", [])
+    div_id = divisions[0].get("id", 1) if divisions else 1
+
     # 1. Fetch all matches (Quals + Elims)
     matches = []
     page = 1
     while True:
-        data = api_get(f"/events/{EVENT_ID}/divisions/1/matches?page={page}&per_page=100")
-        page_items = data.get("data", [])
-        matches.extend(page_items)
-        meta = data.get("meta", {})
-        if not meta.get("next_page_url") or page >= meta.get("last_page", 1):
+        try:
+            data = api_get(f"/events/{eid}/divisions/{div_id}/matches?page={page}&per_page=100")
+            page_items = data.get("data", [])
+            matches.extend(page_items)
+            meta = data.get("meta", {})
+            if not meta.get("next_page_url") or page >= meta.get("last_page", 1):
+                break
+            page += 1
+        except Exception as e:
+            print(f"[WARN] Error fetching matches page {page} for event {eid}: {e}")
             break
-        page += 1
-    
-    # 2. Fetch rankings (sort ascending #1 -> #N since RobotEvents API returns descending)
-    rank_data = api_get(f"/events/{EVENT_ID}/divisions/1/rankings?per_page=100")
-    official_rankings = sorted(rank_data.get("data", []), key=lambda r: r.get("rank", 999))
-    for r in official_rankings:
-        r["is_official"] = True
-    rankings = list(official_rankings)
 
-    # 3. Fetch live event skills runs
-    skills_data = api_get(f"/events/{EVENT_ID}/skills?per_page=100").get("data", [])
+    # 2. Fetch rankings
+    rankings = []
+    official_rankings = []
+    try:
+        rank_data = api_get(f"/events/{eid}/divisions/{div_id}/rankings?per_page=100")
+        official_rankings = sorted(rank_data.get("data", []), key=lambda r: r.get("rank", 999))
+        for r in official_rankings:
+            r["is_official"] = True
+        rankings = list(official_rankings)
+    except Exception as e:
+        print(f"[WARN] Error fetching rankings for event {eid}: {e}")
+
+    # 3. Fetch skills runs
     live_skills = {}
-    for s in skills_data:
-        tnum = (s.get("team") or {}).get("name")
-        if not tnum:
-            continue
-        if tnum not in live_skills:
-            live_skills[tnum] = {"driver": 0, "programming": 0}
-        stype = s.get("type")
-        if stype in ("driver", "programming"):
-            live_skills[tnum][stype] = max(live_skills[tnum][stype], s.get("score", 0))
-    
-    # 4. Build live_matches list, detect current on-field match, scores, and scheduled/actual times
+    try:
+        skills_data = api_get(f"/events/{eid}/skills?per_page=100").get("data", [])
+        for s in skills_data:
+            tnum = (s.get("team") or {}).get("name")
+            if not tnum:
+                continue
+            if tnum not in live_skills:
+                live_skills[tnum] = {"driver": 0, "programming": 0}
+            stype = s.get("type")
+            if stype in ("driver", "programming"):
+                live_skills[tnum][stype] = max(live_skills[tnum][stype], s.get("score", 0))
+    except Exception as e:
+        print(f"[WARN] Error fetching skills for event {eid}: {e}")
+
+    # 4. Fetch teams list
+    teams_list = []
+    team_profiles = {}
+    try:
+        teams_data = api_get(f"/events/{eid}/teams?per_page=100").get("data", [])
+        teams_list = teams_data
+        for t in teams_data:
+            num = (t.get("number") or "").upper()
+            if num:
+                sk = live_skills.get(num, {})
+                drv = sk.get("driver", 0)
+                prg = sk.get("programming", 0)
+                tot = drv + prg
+                team_profiles[num] = {
+                    "id": t.get("id"),
+                    "name": t.get("team_name", ""),
+                    "robot": t.get("robot_name", ""),
+                    "org": t.get("organization", ""),
+                    "city": (t.get("location") or {}).get("city", ""),
+                    "grade": t.get("grade", ""),
+                    "bestDriver": drv,
+                    "bestProg": prg,
+                    "bestSkills": tot
+                }
+    except Exception as e:
+        print(f"[WARN] Error fetching teams for event {eid}: {e}")
+
+    # 5. Build live_matches list, detect current on-field match, scores
     latest_started_num = 1
     scores_dict = {}
     live_matches = []
-    
+
+    def fmt_match_time(iso_str):
+        if not iso_str:
+            return ""
+        try:
+            dt = datetime.datetime.fromisoformat(iso_str)
+            if dt.tzinfo is not None:
+                dt = dt.astimezone(ev_tz)
+            return dt.strftime("%-I:%M %p")
+        except Exception:
+            return ""
+
     sorted_matches = sorted(matches, key=round_sort_key)
     for seq_idx, m in enumerate(sorted_matches, start=1):
         mid = format_match_id(m)
         started_iso = m.get("started")
         sched_iso = m.get("scheduled")
-        started_str = fmt_iso_time(started_iso)
-        sched_str = fmt_iso_time(sched_iso)
+        started_str = fmt_match_time(started_iso)
+        sched_str = fmt_match_time(sched_iso)
 
         red_teams = []
         blue_teams = []
@@ -202,7 +264,7 @@ def sync():
                 "done": is_scored
             }
 
-    # 5. If RobotEvents /rankings lags behind live scored matches (e.g. all 0-0-0), compute live Meet Rankings from scored Qual matches
+    # 6. Rank computation fallback
     api_total_played = sum((r.get("wins", 0) + r.get("losses", 0) + r.get("ties", 0)) for r in rankings)
     team_stats = {}
     for r in rankings:
@@ -211,15 +273,8 @@ def sync():
         if t_name:
             team_stats[t_name] = {
                 "team": t_obj,
-                "wins": 0,
-                "losses": 0,
-                "ties": 0,
-                "wp": 0,
-                "ap": r.get("ap", 0),
-                "sp": 0,
-                "high_score": 0,
-                "total_points": 0,
-                "played": 0
+                "wins": 0, "losses": 0, "ties": 0, "wp": 0, "ap": r.get("ap", 0), "sp": 0,
+                "high_score": 0, "total_points": 0, "played": 0
             }
 
     scored_qual_count = 0
@@ -243,14 +298,9 @@ def sync():
             st["sp"] += lose_score
             st["total_points"] += rs
             st["high_score"] = max(st["high_score"], rs)
-            if rs > bs:
-                st["wins"] += 1
-                st["wp"] += 2
-            elif rs < bs:
-                st["losses"] += 1
-            else:
-                st["ties"] += 1
-                st["wp"] += 1
+            if rs > bs: st["wins"] += 1; st["wp"] += 2
+            elif rs < bs: st["losses"] += 1
+            else: st["ties"] += 1; st["wp"] += 1
 
         for t_name in b_teams:
             st = team_stats.setdefault(t_name, {"team": {"name": t_name}, "wins": 0, "losses": 0, "ties": 0, "wp": 0, "ap": 0, "sp": 0, "high_score": 0, "total_points": 0, "played": 0})
@@ -258,14 +308,9 @@ def sync():
             st["sp"] += lose_score
             st["total_points"] += bs
             st["high_score"] = max(st["high_score"], bs)
-            if bs > rs:
-                st["wins"] += 1
-                st["wp"] += 2
-            elif bs < rs:
-                st["losses"] += 1
-            else:
-                st["ties"] += 1
-                st["wp"] += 1
+            if bs > rs: st["wins"] += 1; st["wp"] += 2
+            elif bs < rs: st["losses"] += 1
+            else: st["ties"] += 1; st["wp"] += 1
 
     computed_total_played = sum(st["played"] for st in team_stats.values())
     rankings_official = bool(api_total_played >= computed_total_played and api_total_played > 0)
@@ -274,12 +319,9 @@ def sync():
             team_stats.values(),
             key=lambda x: (
                 x["wp"] / x["played"] if x["played"] else -1,
-                x["wp"],
-                x["ap"],
+                x["wp"], x["ap"],
                 x["sp"] / x["played"] if x["played"] else -1,
-                x["sp"],
-                x["high_score"],
-                x["total_points"]
+                x["sp"], x["high_score"], x["total_points"]
             ),
             reverse=True
         )
@@ -289,27 +331,46 @@ def sync():
             item["is_official"] = False
             rankings.append(item)
 
-    # Push to Firebase RTDB
-    payload = {
+    # 7. Push tournament data to Firebase RTDB under /vex_33111c/events/{eid}/
+    # Note: Use PATCH or individual PUTs so that user-submitted /events/{eid}/scouting is never overwritten!
+    event_payload = {
+        "metadata": {
+            "id": eid,
+            "name": ev_meta.get("name"),
+            "sku": ev_meta.get("sku"),
+            "start": ev_meta.get("start"),
+            "end": ev_meta.get("end"),
+            "location": ev_meta.get("location", {})
+        },
         "last_sync": now_str,
-        "event_id": EVENT_ID,
+        "event_id": eid,
         "onFieldMatchNum": latest_started_num,
         "matches": live_matches,
         "scores": scores_dict,
         "rankings": rankings,
         "official_rankings": official_rankings,
         "rankings_official": rankings_official,
-        "live_skills": live_skills
+        "live_skills": live_skills,
+        "teams": teams_list,
+        "team_profiles": team_profiles
     }
-    
-    data_bytes = json.dumps(payload).encode("utf-8")
-    put_req = urllib.request.Request(f"{RTDB_URL}/live_event.json", data=data_bytes, method="PUT", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(put_req) as r:
-        print(f"Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to Firebase! Status: {r.status}", flush=True)
+
+    data_bytes = json.dumps(event_payload).encode("utf-8")
+    patch_req = urllib.request.Request(f"{RTDB_URL}/events/{eid}.json", data=data_bytes, method="PATCH", headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(patch_req) as r:
+        print(f"[{eid}] Synced {len(live_matches)} matches, {len(scores_dict)} scored & {len(rankings)} rankings to /events/{eid}! Status: {r.status}", flush=True)
+
+    # If this is the active live tournament, also update /live_event
+    if is_active:
+        patch_live = urllib.request.Request(f"{RTDB_URL}/live_event.json", data=data_bytes, method="PATCH", headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(patch_live) as r:
+            print(f"[{eid}] Mirrored to /live_event. Status: {r.status}", flush=True)
 
 if __name__ == "__main__":
     import time, argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument("--event", type=int, default=EVENT_ID, help=f"RobotEvents Event ID (default: {EVENT_ID})")
+    parser.add_argument("--sync-all", action="store_true", help="Sync all known season events in events_list")
     parser.add_argument("--loop", type=int, default=0, help="Poll interval in seconds (0 = run once)")
     parser.add_argument("--duration", type=int, default=0, help="Max total duration in seconds when looping (0 = infinite)")
     parser.add_argument("--force", action="store_true", help="Run even outside game day hours")
@@ -323,6 +384,17 @@ if __name__ == "__main__":
         hm = (now.hour, now.minute)
         return (7, 30) <= hm <= (18, 30)
 
+    target_event = args.event or EVENT_ID
+
+    if args.sync_all:
+        print("Syncing all events from season list...")
+        for eid in [65031, 61615, 64952, 64639]:
+            try:
+                sync(event_id=eid, is_active=(eid == EVENT_ID))
+            except Exception as e:
+                print(f"[ERROR] Failed syncing event {eid}: {e}")
+        sys.exit(0)
+
     if args.loop > 0:
         start_ts = time.time()
         while True:
@@ -330,7 +402,7 @@ if __name__ == "__main__":
                 print(f"[{datetime.datetime.now().strftime('%I:%M:%S %p')}] Outside game day hours (Nov 7, 2026 7:30 AM - 6:30 PM). Stopping sync.", flush=True)
                 break
             try:
-                sync()
+                sync(event_id=target_event, is_active=(target_event == EVENT_ID))
             except Exception as e:
                 print(f"[WARN] Sync error: {e}", flush=True)
             if args.duration > 0 and (time.time() - start_ts + args.loop) >= args.duration:
@@ -340,4 +412,4 @@ if __name__ == "__main__":
         if not args.force and not is_game_day_hours():
             print("Outside game day hours (Nov 7, 2026 7:30 AM - 6:30 PM). Use --force to run manually.", flush=True)
         else:
-            sync()
+            sync(event_id=target_event, is_active=(target_event == EVENT_ID))
