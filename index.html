@@ -741,9 +741,7 @@
     <section id="view-all" class="view-panel">
       <div class="filter-row">
         <input type="search" id="matchSearchInput" class="search-input" placeholder="Search team # (e.g. 1412J, 285C)..." oninput="renderAllMatches()" />
-        <button class="pill-btn active" id="fieldBtn-ALL" onclick="setFieldFilter('ALL')">All</button>
-        <button class="pill-btn" id="fieldBtn-Buffalo" onclick="setFieldFilter('Buffalo')">Buffalo</button>
-        <button class="pill-btn" id="fieldBtn-Kirby" onclick="setFieldFilter('Kirby')">Kirby</button>
+        <div id="fieldFilterButtons" style="display:inline-flex; gap:6px; flex-shrink:0;"></div>
       </div>
       <div id="allMatchesList"></div>
     </section>
@@ -1753,12 +1751,36 @@
       }).join("");
     }
 
+    function renderFieldFilterButtons() {
+      const container = document.getElementById("fieldFilterButtons");
+      if (!container) return;
+
+      const fields = Array.from(new Set(
+        (state.matches || [])
+          .map(m => (m.field || "").trim())
+          .filter(f => f && f.toUpperCase() !== "TBD")
+      )).sort();
+
+      if (state.fieldFilter !== "ALL" && !fields.includes(state.fieldFilter)) {
+        state.fieldFilter = "ALL";
+      }
+
+      if (fields.length <= 1) {
+        container.innerHTML = "";
+        return;
+      }
+
+      let html = `<button class="pill-btn ${state.fieldFilter === 'ALL' ? 'active' : ''}" onclick="setFieldFilter('ALL')">All</button>`;
+      fields.forEach(f => {
+        const isAct = state.fieldFilter === f ? 'active' : '';
+        html += `<button class="pill-btn ${isAct}" onclick="setFieldFilter('${f}')">${f}</button>`;
+      });
+      container.innerHTML = html;
+    }
+
     function setFieldFilter(field) {
       state.fieldFilter = field;
-      ["ALL", "Buffalo", "Kirby"].forEach(f => {
-        const btn = document.getElementById("fieldBtn-" + f);
-        if (btn) btn.classList.toggle("active", f === field);
-      });
+      renderFieldFilterButtons();
       renderAllMatches();
     }
 
@@ -1776,6 +1798,7 @@
 
       renderHomeHero();
       renderMyMatches();
+      renderFieldFilterButtons();
       renderAllMatches();
       renderRankings();
       renderPickList();
