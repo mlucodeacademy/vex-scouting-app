@@ -1328,15 +1328,22 @@
       const clean = cleanTeam(teamNum);
       const prof = TEAM_PROFILES[clean] || {};
       const stats = getTeamStats(clean);
+      const { list: effRanks } = getEffectiveRankings();
+      const totalPlayed = effRanks.reduce((acc, r) => acc + Number(r.wins || 0) + Number(r.losses || 0) + Number(r.ties || 0), 0);
+      const rankObj = totalPlayed > 0 ? effRanks.find(r => r.team && cleanTeam(r.team.name) === clean) : null;
 
       let html = `
         <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:12px;">
-          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px;">
-            <span style="font-size:1.35rem; font-weight:900; color:var(--text);">${clean}</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:4px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:1.35rem; font-weight:900; color:var(--text);">${clean}</span>
+              ${rankObj && rankObj.rank ? `<span style="background:light-dark(rgba(234,88,12,0.12), rgba(249,115,22,0.2)); color:var(--accent); border:1px solid var(--accent); border-radius:8px; padding:2px 8px; font-size:0.82rem; font-weight:900;">🏆 Rank #${rankObj.rank}</span>` : ''}
+            </div>
             <span style="font-size:0.8rem; font-weight:700; color:var(--accent);">${prof.grade || 'V5RC'}</span>
           </div>
           <div style="font-size:0.95rem; font-weight:800; color:var(--text);">${prof.name || 'Team ' + clean}</div>
           <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">${prof.robot ? '🤖 ' + prof.robot + ' • ' : ''}${prof.org ? prof.org + ' • ' : ''}${prof.city || ''}</div>
+          ${rankObj ? `<div style="font-size:0.76rem; font-weight:700; color:var(--text); margin-top:6px; padding-top:6px; border-top:1px solid var(--border);">Record: <strong>${rankObj.wins}-${rankObj.losses}-${rankObj.ties}</strong> • <strong>${rankObj.wp}</strong> WP${rankObj.ap ? ' • <strong>' + rankObj.ap + '</strong> AP' : ''} • <strong>${rankObj.sp}</strong> SP</div>` : ''}
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
@@ -1830,10 +1837,11 @@
       tbody.innerHTML = rows.map(r => {
         const st = r.stats;
         const pr = r.prof;
+        const rk = currentRankMap[r.num];
         return `
           <tr onclick="openTeamDetail('${r.num}')" style="cursor:pointer;">
             <td>
-              <div style="font-weight:900;">${r.num}</div>
+              <div style="font-weight:900;">${r.num}${rk ? ` <span style="font-size:0.72rem; font-weight:800; color:var(--accent);">#${rk}</span>` : ''}</div>
               <div style="font-size:0.72rem; color:var(--muted);">${pr.name || ''}</div>
             </td>
             <td>${st ? `<strong style="color:light-dark(#15803d, #86efac);font-size:0.95rem;">★ ${st.total}</strong> <span style="color:var(--muted)">/25</span>` : '<span style="color:var(--muted)">Unscouted</span>'}</td>
