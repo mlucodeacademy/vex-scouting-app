@@ -1427,6 +1427,28 @@
       const nextMatch = myMatches.find(m => !isMatchDone(m));
       const container = document.getElementById("homeHeroContainer");
 
+      if (state.matches.length === 0) {
+        container.innerHTML = `
+          <div class="hero-banner" style="border-color:var(--accent); text-align:center; padding:16px;">
+            <div style="font-size:1.4rem;">📅</div>
+            <div style="font-weight:900; font-size:1.05rem; margin-top:4px;">Match Schedule Pending</div>
+            <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">Matches haven't been published yet • ${Object.keys(TEAM_PROFILES).length} teams ready to pre-scout in the Scout tab!</div>
+          </div>
+        `;
+        return;
+      }
+
+      if (myMatches.length === 0) {
+        container.innerHTML = `
+          <div class="hero-banner" style="border-color:var(--border); text-align:center; padding:16px;">
+            <div style="font-size:1.4rem;">🔎</div>
+            <div style="font-weight:900; font-size:1.05rem; margin-top:4px;">No Matches Listed for ${state.focusTeam}</div>
+            <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">Tap ${state.focusTeam} in the header to switch focus team, or check the Schedule tab.</div>
+          </div>
+        `;
+        return;
+      }
+
       if (!nextMatch) {
         container.innerHTML = `
           <div class="hero-banner" style="border-color:var(--green); text-align:center; padding:16px;">
@@ -1571,7 +1593,12 @@
       if (viewAllLink) viewAllLink.textContent = `View All (${myMatches.length}) →`;
 
       const unplayed = myMatches.filter(m => !isMatchDone(m)).slice(0, 2);
-      document.getElementById("homeMyMatchesList").innerHTML = unplayed.map(m => renderMatchCard(m)).join("") || "<p style='color:var(--muted);font-size:0.8rem;'>All matches played!</p>";
+      const emptyUpcomingMsg = state.matches.length === 0
+        ? "<p style='color:var(--muted);font-size:0.8rem;'>Match schedule not published yet — check back once rounds begin!</p>"
+        : (myMatches.length === 0
+            ? `<p style='color:var(--muted);font-size:0.8rem;'>No matches scheduled for ${state.focusTeam}.</p>`
+            : "<p style='color:var(--muted);font-size:0.8rem;'>All matches played!</p>");
+      document.getElementById("homeMyMatchesList").innerHTML = unplayed.map(m => renderMatchCard(m)).join("") || emptyUpcomingMsg;
     }
 
     // RANKINGS VIEW (prioritizes official published RobotEvents qualification standings with AP & SP)
@@ -1822,11 +1849,16 @@
       renderPickList();
 
       const onFieldM = state.matches.find(item => item.num === state.onFieldMatchNum) || state.matches[0];
-      document.getElementById("homeOnFieldMatch").textContent = onFieldM ? onFieldM.id : ("Q" + state.onFieldMatchNum);
-      if (onFieldM) {
-        document.getElementById("homeDelaySub").textContent = `Field: ${onFieldM.field} • ${getMatchDisplayTime(onFieldM)}`;
+      if (state.matches.length === 0) {
+        document.getElementById("homeOnFieldMatch").textContent = "TBD";
+        document.getElementById("homeDelaySub").textContent = "Waiting for match schedule";
       } else {
-        document.getElementById("homeDelaySub").textContent = "Live API Sync";
+        document.getElementById("homeOnFieldMatch").textContent = onFieldM ? onFieldM.id : ("Q" + state.onFieldMatchNum);
+        if (onFieldM) {
+          document.getElementById("homeDelaySub").textContent = `Field: ${onFieldM.field} • ${getMatchDisplayTime(onFieldM)}`;
+        } else {
+          document.getElementById("homeDelaySub").textContent = "Live API Sync";
+        }
       }
     }
 
