@@ -750,7 +750,7 @@
     <section id="view-rankings" class="view-panel">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <h2 style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Meet Rankings</h2>
+          <h2 id="rankingsViewTitle" style="font-size:1.1rem; margin:0; font-weight:900;">🏆 Meet Rankings</h2>
           <span id="rankingsSourceBadge" class="hero-badge" style="font-size:0.70rem; padding:3px 8px;">🟡 Unofficial (Live Calc)</span>
         </div>
         <span style="font-size:0.75rem; color:var(--muted);" id="rankingsLastSyncText">Live Synced</span>
@@ -765,9 +765,9 @@
               <th style="width:40px;">Rank</th>
               <th>Team</th>
               <th>W-L-T</th>
-              <th>WP</th>
-              <th>AP</th>
-              <th>SP</th>
+              <th id="rankCol4Header">WP</th>
+              <th id="rankCol5Header">AP</th>
+              <th id="rankCol6Header">SP</th>
             </tr>
           </thead>
           <tbody id="rankingsTableBody"></tbody>
@@ -1064,13 +1064,106 @@
       scouters: JSON.parse(localStorage.getItem("vex_scouters") || "{}"),
       rankings: JSON.parse(localStorage.getItem("vex_rankings") || "[]"),
       officialRankings: JSON.parse(localStorage.getItem("vex_official_rankings") || "[]"),
-      rankingsOfficial: localStorage.getItem("vex_rankings_official") === "true"
+      rankingsOfficial: localStorage.getItem("vex_rankings_official") === "true",
+      wltOfficial: true,
+      dqOverrides: {}
     };
 
     let currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
     let editingReportId = null;
 
     function cleanTeam(t) { return (t || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(); }
+
+    function isRecfEvent() {
+      const evMeta = (state.eventsList || []).find(e => e.id === state.currentEventId) || state.metadata || {};
+      if (String((state.metadata && state.metadata.scoring_system) || evMeta.scoring_system || "").toLowerCase() === "recf") return true;
+      return String(evMeta.source || (state.metadata && state.metadata.source) || "").toLowerCase().includes("recf");
+    }
+
+    function getTeamRP(r) {
+      if (r.rp !== undefined && r.rp !== null) return Number(r.rp);
+      const played = Number(r.played || ((r.wins || 0) + (r.losses || 0) + (r.ties || 0)));
+      return played > 0 ? Number(((Number(r.wp || 0)) / played).toFixed(2)) : 0;
+    }
+
+    function isTeamDQ(matchId, teamNum) {
+      const mKey = String(matchId || "").trim().toUpperCase();
+      const tKey = cleanTeam(teamNum);
+      return Boolean(state.dqOverrides && state.dqOverrides[mKey] && state.dqOverrides[mKey][tKey]);
+    }
+
+    function applyLocalDQOverridesToRankings() {
+      if (state.wltOfficial) return;
+      const stats = {};
+      (state.matches || []).forEach(m => {
+        const mid = String(m.id || "").trim();
+        if (!mid.toUpperCase().startsWith("Q")) return;
+        const sc = state.scores[mid];
+        if (!sc) return;
+        const rs = Number(sc.red || 0);
+        const bs = Number(sc.blue || 0);
+        if (!sc.done && rs === 0 && bs === 0) return;
+        const loseScore = Math.min(rs, bs);
+        const sides = [
+          { teams: [cleanTeam(m.red1), cleanTeam(m.red2)], my: rs, opp: bs },
+          { teams: [cleanTeam(m.blue1), cleanTeam(m.blue2)], my: bs, opp: rs }
+        ];
+        sides.forEach(({ teams, my, opp }) => {
+          teams.forEach(t => {
+            if (!t || t === "TBD" || t === "MISSING") return;
+            if (!stats[t]) stats[t] = { wins: 0, losses: 0, ties: 0, wp: 0, sp: 0, high_score: 0, total_points: 0, played: 0, dq_count: 0 };
+            stats[t].played++;
+            if (isTeamDQ(mid, t)) {
+              stats[t].losses++;
+              stats[t].dq_count++;
+              return;
+            }
+            stats[t].sp += loseScore;
+            stats[t].total_points += my;
+            stats[t].high_score = Math.max(stats[t].high_score, my);
+            if (my > opp) { stats[t].wins++; stats[t].wp += 2; }
+            else if (my < opp) { stats[t].losses++; }
+            else { stats[t].ties++; stats[t].wp += 1; }
+          });
+        });
+      });
+      const patchList = (list) => (list || []).map(r => {
+        const t = r.team ? cleanTeam(r.team.name) : "";
+        if (!t || r.wlt_is_official) return r;
+        const st = stats[t] || { wins: 0, losses: 0, ties: 0, wp: 0, sp: 0, high_score: 0, total_points: 0, played: 0, dq_count: 0 };
+        const rp = st.played > 0 ? Number((st.wp / st.played).toFixed(2)) : 0;
+        return { ...r, ...st, rp };
+      });
+      state.rankings = patchList(state.rankings);
+      state.officialRankings = patchList(state.officialRankings);
+    }
+
+    async function toggleTeamMatchDQ(matchId, teamNum) {
+      const mKey = String(matchId || "").trim().toUpperCase();
+      const tKey = cleanTeam(teamNum);
+      if (!mKey || !tKey) return;
+      const currentlyDQ = isTeamDQ(mKey, tKey);
+      const nextVal = !currentlyDQ;
+      if (!state.dqOverrides) state.dqOverrides = {};
+      if (!state.dqOverrides[mKey]) state.dqOverrides[mKey] = {};
+      if (nextVal) {
+        state.dqOverrides[mKey][tKey] = true;
+      } else {
+        delete state.dqOverrides[mKey][tKey];
+      }
+      applyLocalDQOverridesToRankings();
+      renderAll();
+      openTeamDetail(tKey);
+      try {
+        await fetch(`${RTDB_URL}/events/${state.currentEventId}/dq_overrides/${encodeURIComponent(mKey)}/${encodeURIComponent(tKey)}.json`, {
+          method: nextVal ? "PUT" : "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: nextVal ? JSON.stringify(true) : undefined
+        });
+      } catch (e) {
+        console.warn("Could not save DQ override to RTDB:", e);
+      }
+    }
 
     // EVENT INFO MODAL
     function openEventInfoModal() {
@@ -1215,6 +1308,8 @@
             state.rankings = data.rankings || [];
             state.officialRankings = data.official_rankings || [];
             state.rankingsOfficial = Boolean(data.rankings_official);
+            state.wltOfficial = data.wlt_official !== undefined ? Boolean(data.wlt_official) : true;
+            state.dqOverrides = data.dq_overrides || {};
             state.onFieldMatchNum = data.onFieldMatchNum || 1;
             state.scouting = data.scouting || {};
 
@@ -1344,7 +1439,16 @@
           </div>
           <div style="font-size:0.95rem; font-weight:800; color:var(--text);">${prof.name || 'Team ' + clean}</div>
           <div style="font-size:0.75rem; color:var(--muted); margin-top:2px;">${prof.robot ? '🤖 ' + prof.robot + ' • ' : ''}${prof.org ? prof.org + ' • ' : ''}${prof.city || ''}</div>
-          ${rankObj ? `<div style="font-size:0.76rem; font-weight:700; color:var(--text); margin-top:6px; padding-top:6px; border-top:1px solid var(--border);">Record: <strong>${rankObj.wins}-${rankObj.losses}-${rankObj.ties}</strong> • <strong>${rankObj.wp}</strong> WP${rankObj.ap ? ' • <strong>' + rankObj.ap + '</strong> AP' : ''} • <strong>${rankObj.sp}</strong> SP</div>` : ''}
+          ${rankObj ? (() => {
+            if (isRecfEvent()) {
+              const rpStr = getTeamRP(rankObj).toFixed(2);
+              const apStr = (rankObj.ap !== null && rankObj.ap !== undefined && (state.wltOfficial || Number(rankObj.ap) > 0)) ? ` • <strong>${Number(rankObj.ap).toFixed(2)}</strong> AP` : '';
+              const epStr = (rankObj.ep !== null && rankObj.ep !== undefined && (state.wltOfficial || Number(rankObj.ep) > 0)) ? ` • <strong>${Number(rankObj.ep).toFixed(2)}</strong> EP` : '';
+              const dqStr = (rankObj.dq_count || 0) > 0 ? ` <span style="color:#ef4444;">(${rankObj.dq_count} DQ)</span>` : '';
+              return `<div style="font-size:0.76rem; font-weight:700; color:var(--text); margin-top:6px; padding-top:6px; border-top:1px solid var(--border);">Record: <strong>${rankObj.wins}-${rankObj.losses}-${rankObj.ties}</strong>${dqStr} • <strong>${rpStr}</strong> RP${apStr}${epStr}</div>`;
+            }
+            return `<div style="font-size:0.76rem; font-weight:700; color:var(--text); margin-top:6px; padding-top:6px; border-top:1px solid var(--border);">Record: <strong>${rankObj.wins}-${rankObj.losses}-${rankObj.ties}</strong> • <strong>${rankObj.wp}</strong> WP${rankObj.ap ? ' • <strong>' + rankObj.ap + '</strong> AP' : ''} • <strong>${rankObj.sp}</strong> SP</div>`;
+          })() : ''}
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
@@ -1391,9 +1495,14 @@
             const sc = state.scores[m.id] || {};
             const rVal = sc.red !== undefined && sc.red !== "" ? sc.red : 0;
             const bVal = sc.blue !== undefined && sc.blue !== "" ? sc.blue : 0;
+            const isQualDone = String(m.id || "").toUpperCase().startsWith("Q") && (sc.done || rVal > 0 || bVal > 0);
+            const dqFlag = isTeamDQ(m.id, clean);
+            const dqBtn = (isQualDone && !state.wltOfficial)
+              ? `<button type="button" onclick="event.stopPropagation(); toggleTeamMatchDQ('${m.id}', '${clean}')" title="Toggle DQ override for ${clean} in ${m.id}" style="margin-left:6px; padding:1px 6px; border-radius:6px; font-size:0.66rem; font-weight:800; cursor:pointer; border:1px solid ${dqFlag ? '#ef4444' : 'var(--border)'}; background:${dqFlag ? 'rgba(239,68,68,0.18)' : 'transparent'}; color:${dqFlag ? '#ef4444' : 'var(--muted)'};">${dqFlag ? '🚫 DQ' : 'DQ?'}</button>`
+              : '';
             return `
-              <div style="display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border);">
-                <span><strong>${m.id}</strong> (${getMatchDisplayTime(m)}) • <span style="color:${isRed ? 'var(--red-text)' : 'var(--blue-text)'}">${isRed ? 'RED' : 'BLUE'}</span></span>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid var(--border);">
+                <span><strong>${m.id}</strong> (${getMatchDisplayTime(m)}) • <span style="color:${isRed ? 'var(--red-text)' : 'var(--blue-text)'}">${isRed ? 'RED' : 'BLUE'}</span>${dqBtn}</span>
                 <span><strong>${rVal} : ${bVal}</strong> • ${m.field}</span>
               </div>
             `;
@@ -1754,10 +1863,30 @@
       document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
 
       const { list: sortedRankings, isOfficial } = getEffectiveRankings();
-      const evMeta = (state.eventsList || []).find(e => e.id === state.currentEventId) || state.metadata || {};
-      const isRecf = String(evMeta.source || (state.metadata && state.metadata.source) || "").toLowerCase().includes("recf");
+      const isRecf = isRecfEvent();
       const sourceLabel = isRecf ? "RECF C²" : "RobotEvents";
       const totalPlayed = sortedRankings.reduce((acc, r) => acc + Number(r.wins || 0) + Number(r.losses || 0) + Number(r.ties || 0), 0);
+      const wltOfficial = state.wltOfficial !== false;
+      const dqOverrideCount = Object.values(state.dqOverrides || {}).reduce((acc, m) => acc + Object.values(m || {}).filter(Boolean).length, 0);
+
+      // Adaptive Rankings header & columns: RECF Achieve (RP / AP / EP) vs VEX V5RC (WP / AP / SP)
+      const titleEl = document.getElementById("rankingsViewTitle");
+      const col4El = document.getElementById("rankCol4Header");
+      const col5El = document.getElementById("rankCol5Header");
+      const col6El = document.getElementById("rankCol6Header");
+      if (titleEl) titleEl.textContent = isRecf ? "🏆 Alliance Rankings" : "🏆 Meet Rankings";
+      if (col4El) {
+        col4El.textContent = isRecf ? "RP" : "WP";
+        col4El.title = isRecf ? "Average Ranking Points per match" : "Win Points";
+      }
+      if (col5El) {
+        col5El.textContent = "AP";
+        col5El.title = isRecf ? "Average Autonomous Ranking Points per match" : "Autonomous Points";
+      }
+      if (col6El) {
+        col6El.textContent = isRecf ? "EP" : "SP";
+        col6El.title = isRecf ? "Average Endgame Ranking Points per match" : "Strength of Schedule Points";
+      }
 
       if (rankLabelEl) {
         rankLabelEl.textContent = isOfficial ? "🏆 Current Rank (Official)" : "🏆 Current Rank (Unofficial)";
@@ -1768,6 +1897,11 @@
           badgeEl.style.background = "var(--gold-bg)";
           badgeEl.style.color = "var(--gold-text)";
           badgeEl.style.border = "1px solid var(--gold-border)";
+        } else if (isOfficial && !wltOfficial) {
+          badgeEl.textContent = `🟢 Rank: ${sourceLabel} • RP/W-L-T: Score Calc`;
+          badgeEl.style.background = "rgba(22, 163, 74, 0.16)";
+          badgeEl.style.color = "light-dark(#15803d, #86efac)";
+          badgeEl.style.border = "1px solid #16a34a";
         } else if (isOfficial) {
           badgeEl.textContent = `🟢 Official (${sourceLabel})`;
           badgeEl.style.background = "rgba(22, 163, 74, 0.16)";
@@ -1783,6 +1917,11 @@
       if (noticeEl) {
         if (totalPlayed === 0 && sortedRankings.length > 0) {
           noticeEl.textContent = `⏳ Waiting for Qualifying Rounds to start — live standings from ${sourceLabel} will populate once Q matches finish (Practice rounds don't affect rank).`;
+        } else if (isOfficial && !wltOfficial && isRecf) {
+          const dqNote = dqOverrideCount > 0 ? ` • ${dqOverrideCount} DQ override${dqOverrideCount > 1 ? 's' : ''} applied` : "";
+          noticeEl.textContent = `ℹ️ Official #Rank is synced live from ${sourceLabel} (includes DQs, AP & EP bonuses). W-L-T & baseline RP are derived from raw match scores${dqNote} — tap any team to flag a single-team DQ (partner keeps win).`;
+        } else if (isOfficial && isRecf) {
+          noticeEl.textContent = `✅ Synced with official ${sourceLabel} Alliance Rankings (Avg RP, AP & EP per match).`;
         } else {
           noticeEl.textContent = isOfficial
             ? `✅ Synced with official published ${sourceLabel} tournament standings (includes WP, AP & SP).`
@@ -1797,15 +1936,29 @@
       tbody.innerHTML = sortedRankings.map(r => {
         const teamNum = r.team ? cleanTeam(r.team.name) : "";
         const isOur = teamNum === state.focusTeam;
-        const apDisplay = (!isOfficial && !r.ap) ? '<span style="color:var(--muted);">--</span>' : r.ap;
+        const dqTag = (r.dq_count || 0) > 0 ? ` <span style="font-size:0.65rem; color:#ef4444; font-weight:800;">(${r.dq_count} DQ)</span>` : "";
+        let col4Display, col5Display, col6Display;
+        if (isRecf) {
+          col4Display = `<strong>${getTeamRP(r).toFixed(2)}</strong>`;
+          col5Display = (r.ap !== null && r.ap !== undefined && (wltOfficial || Number(r.ap) > 0))
+            ? Number(r.ap).toFixed(2)
+            : '<span style="color:var(--muted);">--</span>';
+          col6Display = (r.ep !== null && r.ep !== undefined && (wltOfficial || Number(r.ep) > 0))
+            ? Number(r.ep).toFixed(2)
+            : '<span style="color:var(--muted);">--</span>';
+        } else {
+          col4Display = `<strong>${r.wp}</strong>`;
+          col5Display = ((!isOfficial || !wltOfficial) && !r.ap) ? '<span style="color:var(--muted);">--</span>' : r.ap;
+          col6Display = r.sp;
+        }
         return `
           <tr class="${isOur ? 'our-team-row' : ''}" onclick="openTeamDetail('${teamNum}')" style="cursor:pointer;">
             <td><strong>#${r.rank}</strong></td>
             <td><strong>${teamNum}</strong></td>
-            <td>${r.wins}-${r.losses}-${r.ties}</td>
-            <td><strong>${r.wp}</strong></td>
-            <td>${apDisplay}</td>
-            <td>${r.sp}</td>
+            <td>${r.wins}-${r.losses}-${r.ties}${dqTag}</td>
+            <td>${col4Display}</td>
+            <td>${col5Display}</td>
+            <td>${col6Display}</td>
           </tr>
         `;
       }).join("");
@@ -1813,7 +1966,9 @@
       const ourRankObj = sortedRankings.find(r => r.team && cleanTeam(r.team.name) === state.focusTeam);
       if (ourRankObj) {
         document.getElementById("homeOurRank").textContent = "#" + ourRankObj.rank;
-        document.getElementById("homeRecordSub").textContent = `Record: ${ourRankObj.wins}-${ourRankObj.losses}-${ourRankObj.ties} (${ourRankObj.wp} WP)`;
+        document.getElementById("homeRecordSub").textContent = isRecf
+          ? `Record: ${ourRankObj.wins}-${ourRankObj.losses}-${ourRankObj.ties} (${getTeamRP(ourRankObj).toFixed(2)} RP)`
+          : `Record: ${ourRankObj.wins}-${ourRankObj.losses}-${ourRankObj.ties} (${ourRankObj.wp} WP)`;
       }
     }
 
@@ -2288,6 +2443,8 @@
             if (evData.rankings) state.rankings = evData.rankings;
             if (evData.official_rankings) state.officialRankings = evData.official_rankings;
             if (evData.rankings_official !== undefined) state.rankingsOfficial = Boolean(evData.rankings_official);
+            if (evData.wlt_official !== undefined) state.wltOfficial = Boolean(evData.wlt_official);
+            state.dqOverrides = evData.dq_overrides || {};
             if (evData.onFieldMatchNum) state.onFieldMatchNum = evData.onFieldMatchNum;
             if (evData.scouting) state.scouting = evData.scouting;
             if (evData.team_profiles && Object.keys(evData.team_profiles).length > 0) {

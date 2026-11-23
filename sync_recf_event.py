@@ -163,9 +163,25 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
     scores_dict = {}
     latest_started_num = 1
 
-    # Stats computed from scored Qualification matches (Q*)
+    # Load persistent DQ overrides from RTDB (never overwritten by sync)
+    # Format: { "Q49": { "33111C": true }, ... }
+    raw_dq = rtdb_get(f"events/{event_id}/dq_overrides") or {}
+    dq_overrides = {}
+    if isinstance(raw_dq, dict):
+        for mid_k, teams_map in raw_dq.items():
+            if isinstance(teams_map, dict):
+                flagged = {t.strip().upper() for t, v in teams_map.items() if v}
+                if flagged:
+                    dq_overrides[mid_k.strip().upper()] = flagged
+
+    # Stats from C2 rankings (official rank; W/L/T/WP/AP/SP if provided by C2)
+    raw_rankings = comp.get("rankings") or []
+    has_official_wlt = any(
+        isinstance(r, dict) and any(k in r for k in ("wins", "losses", "ties", "record"))
+        for r in raw_rankings
+    )
     team_stats = {}
-    for r in comp.get("rankings") or []:
+    for r in raw_rankings:
         tnum = (r.get("team") or "").strip().upper()
         if tnum:
             if tnum not in team_profiles:
@@ -180,19 +196,33 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
                     "bestProg": 0,
                     "bestSkills": 0,
                 }
+            wins = int(r.get("wins") or 0)
+            losses = int(r.get("losses") or 0)
+            ties = int(r.get("ties") or 0)
+            if isinstance(r.get("record"), str):
+                rec_m = re.match(r"(\d+)\s*-\s*(\d+)\s*-\s*(\d+)", r["record"].strip())
+                if rec_m:
+                    wins, losses, ties = int(rec_m.group(1)), int(rec_m.group(2)), int(rec_m.group(3))
+            rp_val = r.get("rp") if r.get("rp") is not None else r.get("avgRp")
+            ap_val = r.get("ap") if r.get("ap") is not None else r.get("avgAp")
+            ep_val = r.get("ep") if r.get("ep") is not None else r.get("avgEp")
             team_stats[tnum] = {
                 "team": {"name": tnum},
                 "rank": r.get("rank", 999),
-                "wins": int(r.get("wins") or 0),
-                "losses": int(r.get("losses") or 0),
-                "ties": int(r.get("ties") or 0),
+                "wins": wins,
+                "losses": losses,
+                "ties": ties,
                 "wp": int(r.get("wp") or 0),
-                "ap": int(r.get("ap") or 0),
+                "rp": float(rp_val) if rp_val is not None else None,
+                "ap": float(ap_val) if ap_val is not None else None,
+                "ep": float(ep_val) if ep_val is not None else None,
                 "sp": int(r.get("sp") or 0),
                 "high_score": int(r.get("highScore") or r.get("high_score") or 0),
                 "total_points": int(r.get("totalPoints") or r.get("total_points") or 0),
-                "played": 0,
+                "played": wins + losses + ties if has_official_wlt else 0,
+                "dq_count": 0,
                 "is_official": True,
+                "wlt_is_official": has_official_wlt,
             }
 
     for seq_idx, m in enumerate(raw_matches, start=1):
@@ -231,47 +261,49 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
                 "done": is_done,
             }
 
-        # Aggregate Qual stats (Q*) if C2 rankings don't include W/L/T yet
-        if is_done and mid.upper().startswith("Q"):
+        # Aggregate Qual stats (Q*) ONLY when C2 rankings do not include official W/L/T yet,
+        # honoring any persistent per-team DQ overrides in Firebase RTDB (/dq_overrides).
+        if is_done and mid.upper().startswith("Q") and not has_official_wlt:
             lose_score = min(r_score, b_score)
-            for t_name in red_teams:
-                if t_name == "TBD":
-                    continue
-                st = team_stats.setdefault(t_name, {
-                    "team": {"name": t_name}, "rank": 999, "wins": 0, "losses": 0, "ties": 0,
-                    "wp": 0, "ap": 0, "sp": 0, "high_score": 0, "total_points": 0, "played": 0, "is_official": True
-                })
-                st["played"] += 1
-                st["sp"] += lose_score
-                st["total_points"] += r_score
-                st["high_score"] = max(st["high_score"], r_score)
-                if r_score > b_score:
-                    st["wins"] += 1; st["wp"] += 2
-                elif r_score < b_score:
-                    st["losses"] += 1
-                else:
-                    st["ties"] += 1; st["wp"] += 1
+            dq_set = dq_overrides.get(mid.upper(), set())
+            for side, teams_list, my_score, opp_score in (
+                ("red", red_teams, r_score, b_score),
+                ("blue", blue_teams, b_score, r_score),
+            ):
+                for t_name in teams_list:
+                    if t_name == "TBD":
+                        continue
+                    st = team_stats.setdefault(t_name, {
+                        "team": {"name": t_name}, "rank": 999, "wins": 0, "losses": 0, "ties": 0,
+                        "wp": 0, "rp": None, "ap": None, "ep": None, "sp": 0, "high_score": 0,
+                        "total_points": 0, "played": 0, "dq_count": 0, "is_official": True,
+                        "wlt_is_official": False,
+                    })
+                    st["played"] += 1
+                    if t_name in dq_set:
+                        # Per RECF Achieve rules: single-team DQ gives ONLY that team a loss and 0 RP/AP/EP;
+                        # their alliance partner still keeps the alliance match result!
+                        st["losses"] += 1
+                        st["dq_count"] += 1
+                        continue
+                    st["sp"] += lose_score
+                    st["total_points"] += my_score
+                    st["high_score"] = max(st["high_score"], my_score)
+                    if my_score > opp_score:
+                        st["wins"] += 1; st["wp"] += 2
+                    elif my_score < opp_score:
+                        st["losses"] += 1
+                    else:
+                        st["ties"] += 1; st["wp"] += 1
 
-            for t_name in blue_teams:
-                if t_name == "TBD":
-                    continue
-                st = team_stats.setdefault(t_name, {
-                    "team": {"name": t_name}, "rank": 999, "wins": 0, "losses": 0, "ties": 0,
-                    "wp": 0, "ap": 0, "sp": 0, "high_score": 0, "total_points": 0, "played": 0, "is_official": True
-                })
-                st["played"] += 1
-                st["sp"] += lose_score
-                st["total_points"] += b_score
-                st["high_score"] = max(st["high_score"], b_score)
-                if b_score > r_score:
-                    st["wins"] += 1; st["wp"] += 2
-                elif b_score < r_score:
-                    st["losses"] += 1
-                else:
-                    st["ties"] += 1; st["wp"] += 1
+    # Compute baseline Avg RP per match (from W/L/T) when C2 didn't supply official RP
+    for st in team_stats.values():
+        if st.get("rp") is None:
+            played = st.get("played") or (st.get("wins", 0) + st.get("losses", 0) + st.get("ties", 0))
+            st["rp"] = round(st.get("wp", 0) / played, 2) if played > 0 else 0.0
 
     # 3. Rankings sorted ascending #1 -> #N
-    rankings = sorted(team_stats.values(), key=lambda x: (x.get("rank", 999), -x.get("wp", 0)))
+    rankings = sorted(team_stats.values(), key=lambda x: (x.get("rank", 999), -(x.get("rp") or 0)))
 
     # 4. Push to Firebase RTDB (individual keys so /scouting is NEVER overwritten)
     metadata = {
@@ -279,6 +311,7 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
         "sku": sku,
         "name": ev_name,
         "source": "recfevents+redshirtsynergy",
+        "scoring_system": "recf",
         "url": recf_url,
         "schedule_url": f"https://redshirtsynergy.com/events/{rss_uuid}#schedule",
         "livestream_url": (guide.get("livestream") or {}).get("url", ""),
@@ -299,14 +332,17 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
     rtdb_put(f"events/{event_id}/rankings", rankings)
     rtdb_put(f"events/{event_id}/official_rankings", rankings)
     rtdb_put(f"events/{event_id}/rankings_official", True)
+    rtdb_put(f"events/{event_id}/wlt_official", has_official_wlt)
     rtdb_put(f"events/{event_id}/live_skills", live_skills)
     rtdb_put(f"events/{event_id}/team_profiles", team_profiles)
     rtdb_put(f"events/{event_id}/onFieldMatchNum", latest_started_num)
     rtdb_put(f"events/{event_id}/last_sync", now_str)
 
+    dq_total = sum(len(s) for s in dq_overrides.values())
     print(
         f"[{now_str}] [RECF {event_id}] Synced {len(live_matches)} matches, "
-        f"{len(scores_dict)} scored, {len(rankings)} rankings & {len(live_skills)} solo skills to Firebase!",
+        f"{len(scores_dict)} scored, {len(rankings)} rankings "
+        f"(wlt_official={has_official_wlt}, dq_overrides={dq_total}) & {len(live_skills)} solo skills to Firebase!",
         flush=True,
     )
 
@@ -316,17 +352,34 @@ if __name__ == "__main__":
     parser.add_argument("--rss-uuid", type=str, default=DEFAULT_RSS_EVENT_UUID)
     parser.add_argument("--refresh-teams", action="store_true")
     parser.add_argument("--loop", type=int, default=0, help="Poll interval in seconds (0 = run once)")
+    parser.add_argument("--duration", type=int, default=0, help="Max total run duration in seconds when looping (0 = unlimited)")
     parser.add_argument("--force", action="store_true", help="Run even outside game-day hours")
+    parser.add_argument("--dq", action="append", default=[], help="Flag a team DQ as MATCH:TEAM (e.g. Q49:33111C)")
+    parser.add_argument("--undq", action="append", default=[], help="Clear a team DQ as MATCH:TEAM (e.g. Q49:33111C)")
     args = parser.parse_args()
+
+    for spec in args.dq:
+        if ":" in spec:
+            mid_s, team_s = [p.strip().upper() for p in spec.split(":", 1)]
+            if mid_s and team_s:
+                rtdb_put(f"events/{args.event}/dq_overrides/{mid_s}/{team_s}", True)
+                print(f"[DQ] Flagged {team_s} in {mid_s}", flush=True)
+    for spec in args.undq:
+        if ":" in spec:
+            mid_s, team_s = [p.strip().upper() for p in spec.split(":", 1)]
+            if mid_s and team_s:
+                rtdb_put(f"events/{args.event}/dq_overrides/{mid_s}/{team_s}", None)
+                print(f"[DQ] Cleared {team_s} in {mid_s}", flush=True)
 
     def is_game_day_hours():
         now = datetime.datetime.now()
         if now.date() not in (datetime.date(2026, 11, 23), datetime.date(2026, 11, 24)):
             return False
         hm = (now.hour, now.minute)
-        return (7, 30) <= hm <= (18, 45)
+        return (7, 30) <= hm <= (19, 30)
 
     if args.loop > 0:
+        start_ts = time.time()
         while True:
             if not args.force and not is_game_day_hours():
                 print(f"[{datetime.datetime.now().strftime('%I:%M:%S %p')}] Outside Space City Achieve hours. Stopping sync.", flush=True)
@@ -335,6 +388,8 @@ if __name__ == "__main__":
                 sync_recf_live(args.event, args.rss_uuid, refresh_recf_teams=False)
             except Exception as e:
                 print(f"[WARN] RECF live sync error: {e}", flush=True)
+            if args.duration > 0 and (time.time() - start_ts + args.loop) >= args.duration:
+                break
             time.sleep(args.loop)
     else:
         sync_recf_live(args.event, args.rss_uuid, refresh_recf_teams=args.refresh_teams)
