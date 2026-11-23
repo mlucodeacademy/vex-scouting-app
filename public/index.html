@@ -1729,13 +1729,22 @@
       document.getElementById("homeRecordSub").textContent = "Record: 0-0-0";
 
       const { list: sortedRankings, isOfficial } = getEffectiveRankings();
+      const evMeta = (state.eventsList || []).find(e => e.id === state.currentEventId) || state.metadata || {};
+      const isRecf = String(evMeta.source || (state.metadata && state.metadata.source) || "").toLowerCase().includes("recf");
+      const sourceLabel = isRecf ? "RECF C²" : "RobotEvents";
+      const totalPlayed = sortedRankings.reduce((acc, r) => acc + Number(r.wins || 0) + Number(r.losses || 0) + Number(r.ties || 0), 0);
 
       if (rankLabelEl) {
         rankLabelEl.textContent = isOfficial ? "🏆 Current Rank (Official)" : "🏆 Current Rank (Unofficial)";
       }
       if (badgeEl) {
-        if (isOfficial) {
-          badgeEl.textContent = "🟢 Official (RobotEvents)";
+        if (totalPlayed === 0 && sortedRankings.length > 0) {
+          badgeEl.textContent = `⏳ Pre-Quals (${sourceLabel})`;
+          badgeEl.style.background = "var(--gold-bg)";
+          badgeEl.style.color = "var(--gold-text)";
+          badgeEl.style.border = "1px solid var(--gold-border)";
+        } else if (isOfficial) {
+          badgeEl.textContent = `🟢 Official (${sourceLabel})`;
           badgeEl.style.background = "rgba(22, 163, 74, 0.16)";
           badgeEl.style.color = "light-dark(#15803d, #86efac)";
           badgeEl.style.border = "1px solid #16a34a";
@@ -1747,9 +1756,13 @@
         }
       }
       if (noticeEl) {
-        noticeEl.textContent = isOfficial
-          ? "✅ Synced with official published RobotEvents tournament standings (includes WP, AP & SP)."
-          : "ℹ️ Unofficial live calculation from match scores (AP pending official RobotEvents publication).";
+        if (totalPlayed === 0 && sortedRankings.length > 0) {
+          noticeEl.textContent = `⏳ Waiting for Qualifying Rounds to start — live standings from ${sourceLabel} will populate once Q matches finish (Practice rounds don't affect rank).`;
+        } else {
+          noticeEl.textContent = isOfficial
+            ? `✅ Synced with official published ${sourceLabel} tournament standings (includes WP, AP & SP).`
+            : `ℹ️ Unofficial live calculation from match scores (AP pending official ${sourceLabel} publication).`;
+        }
       }
 
       if (!sortedRankings.length) {
