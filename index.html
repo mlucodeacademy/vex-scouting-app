@@ -981,12 +981,23 @@
 
     const DEFAULT_EVENTS_LIST = [
       {
+        id: 645,
+        sku: "ACH20266718",
+        name: "Space City Achieve HS Signature Event (Houston TX)",
+        short_name: "Space City Achieve",
+        date: "Nov 23–24, 2026",
+        status: "active",
+        location: "Houston, TX",
+        source: "recfevents",
+        url: "https://recfevents.org/Events/Details/645"
+      },
+      {
         id: 65031,
         sku: "RE-V5RC-26-5031",
         name: "Texan Standoff (Houston TX)",
         short_name: "Texan Standoff",
         date: "Nov 7, 2026",
-        status: "active",
+        status: "completed",
         location: "Houston, TX"
       },
       {
@@ -1020,7 +1031,7 @@
 
     // State
     const urlEventParam = new URLSearchParams(window.location.search).get("event");
-    const initialEventId = Number(urlEventParam || localStorage.getItem("vex_current_event_id") || 65031);
+    const initialEventId = Number(urlEventParam || localStorage.getItem("vex_current_event_id") || 645);
 
     const urlTeamParam = new URLSearchParams(window.location.search).get("team");
     const savedFocusTeam = (localStorage.getItem("vex_focus_team") || "").toUpperCase();
@@ -1088,8 +1099,15 @@
       const scEl = document.getElementById("infoScoutingText");
       if (scEl) scEl.textContent = `${Object.keys(state.scouting).length} Logged`;
       const linkEl = document.getElementById("infoRobotEventsLink");
-      if (linkEl && sku) {
-        linkEl.href = `https://www.robotevents.com/robot-competitions/vex-robotics-competition/${sku}.html`;
+      if (linkEl) {
+        const recfUrl = ev.url || (state.metadata && state.metadata.url);
+        if (recfUrl) {
+          linkEl.href = recfUrl;
+          linkEl.textContent = "🌐 RECF Events Page";
+        } else if (sku) {
+          linkEl.href = `https://www.robotevents.com/robot-competitions/vex-robotics-competition/${sku}.html`;
+          linkEl.textContent = "🌐 RobotEvents Page";
+        }
       }
     }
 
@@ -1109,7 +1127,7 @@
         let badgeText = "Upcoming";
         if (ev.status === "completed") {
           badgeText = "📜 Completed";
-        } else if (ev.status === "active" || ev.id === 65031) {
+        } else if (ev.status === "active") {
           badgeClass = "scout-badge green";
           badgeText = "🟢 Live / Active";
         }
