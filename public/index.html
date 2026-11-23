@@ -947,6 +947,7 @@
         <input type="text" id="scoutCommentInput" class="text-input" placeholder="e.g. Can stack 6 levels, strong auton, tipped..." />
       </div>
       <button type="submit" class="full-btn">✅ Save to App + Google Form</button>
+      <button type="button" id="deleteScoutBtn" class="full-btn hidden" style="background:transparent; color:#ef4444; border:1px solid #ef4444; margin-top:8px;" onclick="deleteCurrentEditingReport()">🗑️ Delete This Scout Report</button>
     </form>
   </dialog>
 
@@ -1359,10 +1360,14 @@
             <div style="font-size:0.75rem; color:var(--text); line-height:1.4;">
               Auton: <strong>${stats.auton}</strong> • Loading: <strong>${stats.loading}</strong> • Scoring: <strong>${stats.scoring}</strong> • Toggle: <strong>${stats.toggle}</strong> • Driving: <strong>${stats.driving}</strong>
             </div>
-            <div style="margin-top:8px; border-top:1px solid var(--border); padding-top:6px; display:flex; flex-direction:column; gap:4px;">
+            <div style="margin-top:8px; border-top:1px solid var(--border); padding-top:6px; display:flex; flex-direction:column; gap:6px;">
               ${stats.reports.map(r => {
                 const rTot = Number(r.auton||0) + Number(r.loading||0) + Number(r.scoring||0) + Number(r.toggle||0) + Number(r.driving||0);
-                return `<div style="font-size:0.73rem; color:var(--muted);">👤 <strong style="color:var(--text);">${r.submitter || 'Scout'}</strong>${r.match ? ' (' + r.match + ')' : ''}: <strong>${rTot}/25</strong> <span style="opacity:0.8;">[${r.auton}/${r.loading}/${r.scoring}/${r.toggle}/${r.driving}]</span>${r.comment ? ' — <em>"' + r.comment + '"</em>' : ''}</div>`;
+                const safeId = (r.id || '').replace(/'/g, "\\'");
+                return `<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; font-size:0.73rem; color:var(--muted);">
+                  <div style="flex:1; min-width:0;">👤 <strong style="color:var(--text);">${r.submitter || 'Scout'}</strong>${r.match ? ' (' + r.match + ')' : ''}: <strong>${rTot}/25</strong> <span style="opacity:0.8;">[${r.auton}/${r.loading}/${r.scoring}/${r.toggle}/${r.driving}]</span>${r.comment ? ' — <em>"' + r.comment + '"</em>' : ''}</div>
+                  ${safeId ? `<button type="button" onclick="deleteScoutReport('${safeId}', '${clean}')" title="Delete this scout report" style="background:transparent; border:1px solid var(--border); color:#ef4444; border-radius:6px; padding:2px 6px; font-size:0.7rem; font-weight:700; cursor:pointer; flex-shrink:0;">🗑️</button>` : ''}
+                </div>`;
               }).join("")}
             </div>
           </div>
@@ -1408,7 +1413,9 @@
     // SCOUTING STATS
     function getTeamStats(teamNum) {
       const clean = cleanTeam(teamNum);
-      const reports = Object.values(state.scouting).filter(r => cleanTeam(r.team) === clean);
+      const reports = Object.entries(state.scouting || {})
+        .filter(([k, r]) => r && cleanTeam(r.team) === clean)
+        .map(([k, r]) => ({ ...r, id: r.id || k }));
       if (!reports.length) return null;
       let a = 0, l = 0, s = 0, t = 0, d = 0;
       const comments = [];
@@ -1962,6 +1969,7 @@
     function syncScoutFormForSelection() {
       const sel = document.getElementById("scoutTeamSelect");
       const bannerEl = document.getElementById("scoutFormStatusBanner");
+      const delBtn = document.getElementById("deleteScoutBtn");
       if (!sel || !sel.value) {
         editingReportId = null;
         currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
@@ -1971,6 +1979,7 @@
           bannerEl.textContent = "👆 Choose a team above to start scouting.";
           bannerEl.style.color = "var(--muted)";
         }
+        if (delBtn) delBtn.classList.add("hidden");
         initRatingRows();
         return;
       }
@@ -1980,12 +1989,13 @@
       let myPrevReport = null;
       if (effSub) {
         const normSub = effSub.toLowerCase();
-        const matching = Object.values(state.scouting).filter(r => {
+        const matching = Object.entries(state.scouting || {}).filter(([k, r]) => {
+          if (!r) return false;
           if (cleanTeam(r.team) !== selectedTeam) return false;
           if ((r.submitter || "").trim().toLowerCase() !== normSub) return false;
           if (state.submitter === "Other" && r.scoutDeviceId && r.scoutDeviceId !== state.scoutDeviceId) return false;
           return true;
-        });
+        }).map(([k, r]) => ({ ...r, id: r.id || k }));
         if (matching.length > 0) {
           myPrevReport = matching[matching.length - 1];
         }
@@ -2005,9 +2015,10 @@
           document.getElementById("scoutMatchInput").value = myPrevReport.match;
         }
         if (bannerEl) {
-          bannerEl.textContent = `✏️ Loaded ${effSub}'s report for ${selectedTeam}${myPrevReport.match ? ' (' + myPrevReport.match + ')' : ''}. Save to update, or change Match # to add a new report.`;
+          bannerEl.textContent = `✏️ Loaded ${effSub}'s report for ${selectedTeam}${myPrevReport.match ? ' (' + myPrevReport.match + ')' : ''}. Saving will update it.`;
           bannerEl.style.color = "var(--accent)";
         }
+        if (delBtn) delBtn.classList.remove("hidden");
       } else {
         editingReportId = null;
         currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
@@ -2016,8 +2027,51 @@
           bannerEl.textContent = `🆕 Not yet scouted by ${effSub || 'you'} in this meet — tap 0–5 for each category.`;
           bannerEl.style.color = "var(--muted)";
         }
+        if (delBtn) delBtn.classList.add("hidden");
       }
       initRatingRows();
+    }
+
+    async function deleteScoutReport(reportId, teamNum) {
+      if (!reportId || !state.scouting || !state.scouting[reportId]) return;
+      const r = state.scouting[reportId];
+      const who = r.submitter || "Scout";
+      const tm = cleanTeam(teamNum || r.team);
+      if (!confirm(`Delete ${who}'s scouting report for ${tm}?`)) return;
+
+      delete state.scouting[reportId];
+      localStorage.setItem("vex_scouting", JSON.stringify(state.scouting));
+      renderAll();
+
+      try {
+        await fetch(`${RTDB_URL}/events/${state.currentEventId}/scouting/${encodeURIComponent(reportId)}.json`, {
+          method: "DELETE"
+        });
+        if (state.currentEventId === 65031) {
+          await fetch(`${RTDB_URL}/scouting/${encodeURIComponent(reportId)}.json`, {
+            method: "DELETE"
+          });
+        }
+        document.getElementById("syncStatusText").textContent = "Synced Live";
+      } catch (e) {
+        document.getElementById("syncStatusText").textContent = "Offline Cached";
+      }
+
+      const detailDlg = document.getElementById("teamDetailDialog");
+      if (detailDlg && detailDlg.open && tm) {
+        openTeamDetail(tm);
+      }
+      const scoutDlg = document.getElementById("scoutDialog");
+      if (scoutDlg && scoutDlg.open) {
+        syncScoutFormForSelection();
+      }
+    }
+
+    async function deleteCurrentEditingReport() {
+      if (!editingReportId) return;
+      const sel = document.getElementById("scoutTeamSelect");
+      const tm = sel && sel.value ? cleanTeam(sel.value.split(" ")[0]) : "";
+      await deleteScoutReport(editingReportId, tm);
     }
 
     function onScoutTeamChange() {
