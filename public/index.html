@@ -920,7 +920,7 @@
       </div>
       <div class="form-group">
         <label for="scoutMatchInput">Match (e.g. Q4)</label>
-        <input type="text" id="scoutMatchInput" class="text-input" placeholder="Q4" />
+        <input type="text" id="scoutMatchInput" class="text-input" placeholder="Q4" oninput="syncScoutFormForSelection()" />
       </div>
       <div class="form-group">
         <label>Auton (0-5)</label>
@@ -1324,8 +1324,9 @@
     }
 
     // TEAM PROFILE MODAL (DOSSIER)
-    function openTeamDetail(teamNum) {
+    function openTeamDetail(teamNum, matchId) {
       const clean = cleanTeam(teamNum);
+      const matchTag = (matchId || "").trim();
       const prof = TEAM_PROFILES[clean] || {};
       const stats = getTeamStats(clean);
       const { list: effRanks } = getEffectiveRankings();
@@ -1402,9 +1403,11 @@
 
       document.getElementById("teamDetailTitle").textContent = clean + " Dossier";
       document.getElementById("teamDetailContent").innerHTML = html;
-      document.getElementById("scoutThisTeamBtn").onclick = () => {
+      const scoutBtn = document.getElementById("scoutThisTeamBtn");
+      scoutBtn.textContent = matchTag ? `📝 Scout ${clean} (${matchTag})` : `📝 Scout This Team`;
+      scoutBtn.onclick = () => {
         document.getElementById("teamDetailDialog").close();
-        openScoutModal(clean);
+        openScoutModal(clean, matchTag);
       };
       const focusBtn = document.getElementById("setFocusTeamBtn");
       if (focusBtn) {
@@ -1512,8 +1515,8 @@
             <span class="hero-badge" style="background:${isRed ? '#dc2626' : '#2563eb'}; color:#fff;">${station}</span>
           </div>
           <div style="font-size:0.8rem; color:var(--muted); display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px; border-top:1px solid var(--border); padding-top:6px; margin-top:6px;">
-            <span>🤝 Partner: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${partner}')">${partner}</strong></span>
-            <span>⚔️ Vs: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${opp1}')">${opp1}</strong> & <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${opp2}')">${opp2}</strong></span>
+            <span>🤝 Partner: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${partner}', '${nextMatch.id}')">${partner}</strong></span>
+            <span>⚔️ Vs: <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${opp1}', '${nextMatch.id}')">${opp1}</strong> & <strong style="color:var(--text);cursor:pointer;text-decoration:underline" onclick="openTeamDetail('${opp2}', '${nextMatch.id}')">${opp2}</strong></span>
           </div>
         </div>
       `;
@@ -1603,7 +1606,7 @@
         badgeHtml = `<span class="scout-badge high">★ ${stats.total}</span>`;
       }
       return `
-        <button type="button" class="team-chip ${isFocus ? 'focus-team' : ''}" onclick="openTeamDetail('${num}')" title="${num}${rank ? ' (Rank #' + rank + ')' : ''}: ${name}">
+        <button type="button" class="team-chip ${isFocus ? 'focus-team' : ''}" onclick="openTeamDetail('${num}', '${matchId || ''}')" title="${num}${rank ? ' (Rank #' + rank + ')' : ''}: ${name}">
           <div class="team-num">
             <span>${num}${isFocus ? '★' : ''}${rankHtml}</span>
             ${name ? `<span class="team-name-inline">${name}</span>` : ''}
@@ -2022,6 +2025,8 @@
       }
       const selectedTeam = cleanTeam(sel.value.split(" ")[0]);
       const effSub = getEffectiveSubmitter();
+      const rawMatchVal = (document.getElementById("scoutMatchInput").value || "").trim();
+      const normMatch = rawMatchVal.toUpperCase();
 
       let myPrevReport = null;
       if (effSub) {
@@ -2031,6 +2036,7 @@
           if (cleanTeam(r.team) !== selectedTeam) return false;
           if ((r.submitter || "").trim().toLowerCase() !== normSub) return false;
           if (state.submitter === "Other" && r.scoutDeviceId && r.scoutDeviceId !== state.scoutDeviceId) return false;
+          if ((r.match || "").trim().toUpperCase() !== normMatch) return false;
           return true;
         }).map(([k, r]) => ({ ...r, id: r.id || k }));
         if (matching.length > 0) {
@@ -2048,11 +2054,8 @@
           driving: Number(myPrevReport.driving ?? 0)
         };
         document.getElementById("scoutCommentInput").value = myPrevReport.comment || "";
-        if (!document.getElementById("scoutMatchInput").value && myPrevReport.match) {
-          document.getElementById("scoutMatchInput").value = myPrevReport.match;
-        }
         if (bannerEl) {
-          bannerEl.textContent = `✏️ Loaded ${effSub}'s report for ${selectedTeam}${myPrevReport.match ? ' (' + myPrevReport.match + ')' : ''}. Saving will update it.`;
+          bannerEl.textContent = `✏️ Loaded ${effSub}'s report for ${selectedTeam}${rawMatchVal ? ' (' + rawMatchVal + ')' : ''}. Saving will update it.`;
           bannerEl.style.color = "var(--accent)";
         }
         if (delBtn) delBtn.classList.remove("hidden");
@@ -2061,7 +2064,7 @@
         currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
         document.getElementById("scoutCommentInput").value = "";
         if (bannerEl) {
-          bannerEl.textContent = `🆕 Not yet scouted by ${effSub || 'you'} in this meet — tap 0–5 for each category.`;
+          bannerEl.textContent = `🆕 New report by ${effSub || 'you'} for ${selectedTeam}${rawMatchVal ? ' (' + rawMatchVal + ')' : ''} — tap 0–5 for each category.`;
           bannerEl.style.color = "var(--muted)";
         }
         if (delBtn) delBtn.classList.add("hidden");
@@ -2164,13 +2167,15 @@
       const match = document.getElementById("scoutMatchInput").value.trim();
       const comment = document.getElementById("scoutCommentInput").value.trim();
 
-      // Always UPDATE existing report for the same (submitter, team) in this event instead of adding duplicates
+      // Update existing report for the same (submitter, team, match) in this event; different match # creates a separate per-match report
       const normSub = finalSubmitter.trim().toLowerCase();
+      const normMatch = match.trim().toUpperCase();
       const existingMatches = Object.entries(state.scouting || {}).filter(([k, r]) => {
         if (!r) return false;
         if (cleanTeam(r.team) !== cleanNum) return false;
         if ((r.submitter || "").trim().toLowerCase() !== normSub) return false;
         if (state.submitter === "Other" && r.scoutDeviceId && r.scoutDeviceId !== state.scoutDeviceId) return false;
+        if ((r.match || "").trim().toUpperCase() !== normMatch) return false;
         return true;
       });
 
