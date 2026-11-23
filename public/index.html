@@ -2073,13 +2073,30 @@
       const match = document.getElementById("scoutMatchInput").value.trim();
       const comment = document.getElementById("scoutCommentInput").value.trim();
 
-      // Reuse editingReportId if updating same match (or blank match), otherwise create new entry ID
-      let id = "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
-      if (editingReportId && state.scouting[editingReportId]) {
-        const prev = state.scouting[editingReportId];
-        if ((prev.match || "").toUpperCase() === match.toUpperCase()) {
-          id = editingReportId;
+      // Always UPDATE existing report for the same (submitter, team) in this event instead of adding duplicates
+      const normSub = finalSubmitter.trim().toLowerCase();
+      const existingMatches = Object.entries(state.scouting || {}).filter(([k, r]) => {
+        if (!r) return false;
+        if (cleanTeam(r.team) !== cleanNum) return false;
+        if ((r.submitter || "").trim().toLowerCase() !== normSub) return false;
+        if (state.submitter === "Other" && r.scoutDeviceId && r.scoutDeviceId !== state.scoutDeviceId) return false;
+        return true;
+      });
+
+      let id;
+      if (existingMatches.length > 0) {
+        id = existingMatches[existingMatches.length - 1][0];
+        // Clean up any older duplicates for the same (submitter, team)
+        for (let i = 0; i < existingMatches.length - 1; i++) {
+          const dupId = existingMatches[i][0];
+          delete state.scouting[dupId];
+          fetch(`${RTDB_URL}/events/${state.currentEventId}/scouting/${encodeURIComponent(dupId)}.json`, { method: "DELETE" }).catch(() => {});
+          if (state.currentEventId === 65031) {
+            fetch(`${RTDB_URL}/scouting/${encodeURIComponent(dupId)}.json`, { method: "DELETE" }).catch(() => {});
+          }
         }
+      } else {
+        id = "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
       }
 
       const entry = {
