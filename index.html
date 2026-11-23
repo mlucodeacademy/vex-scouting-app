@@ -1181,8 +1181,21 @@
       const scoutSel = document.getElementById("scoutTeamSelect");
       if (!scoutSel) return;
       const nums = Object.keys(TEAM_PROFILES).sort();
-      FORM_TEAM_OPTIONS = nums.map(num => `${num} ${TEAM_PROFILES[num].name || ''}`);
-      scoutSel.innerHTML = FORM_TEAM_OPTIONS.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+      const nextOptions = nums.map(num => TEAM_PROFILES[num].name ? `${num} ${TEAM_PROFILES[num].name}` : num);
+      // Skip rebuilding DOM if team list is unchanged (prevents 30s live sync from resetting open dropdown!)
+      if (scoutSel.options.length === nextOptions.length + 1 &&
+          nextOptions.every((opt, i) => FORM_TEAM_OPTIONS[i] === opt)) {
+        return;
+      }
+      const prevVal = scoutSel.value;
+      FORM_TEAM_OPTIONS = nextOptions;
+      scoutSel.innerHTML = `<option value="">-- Select Team --</option>` +
+        FORM_TEAM_OPTIONS.map(opt => `<option value="${opt}">${opt}</option>`).join("");
+      if (prevVal && FORM_TEAM_OPTIONS.includes(prevVal)) {
+        scoutSel.value = prevVal;
+      } else {
+        scoutSel.value = "";
+      }
     }
 
     async function loadEventData(eventId) {
@@ -1948,10 +1961,21 @@
 
     function syncScoutFormForSelection() {
       const sel = document.getElementById("scoutTeamSelect");
-      if (!sel || !sel.value) return;
+      const bannerEl = document.getElementById("scoutFormStatusBanner");
+      if (!sel || !sel.value) {
+        editingReportId = null;
+        currentRatings = { auton: null, loading: null, scoring: null, toggle: null, driving: null };
+        const commEl = document.getElementById("scoutCommentInput");
+        if (commEl) commEl.value = "";
+        if (bannerEl) {
+          bannerEl.textContent = "👆 Choose a team above to start scouting.";
+          bannerEl.style.color = "var(--muted)";
+        }
+        initRatingRows();
+        return;
+      }
       const selectedTeam = cleanTeam(sel.value.split(" ")[0]);
       const effSub = getEffectiveSubmitter();
-      const bannerEl = document.getElementById("scoutFormStatusBanner");
 
       let myPrevReport = null;
       if (effSub) {
@@ -2003,9 +2027,13 @@
 
     function openScoutModal(teamNum, matchId) {
       const sel = document.getElementById("scoutTeamSelect");
-      const targetTeam = cleanTeam(teamNum) || state.focusTeam;
-      const exact = FORM_TEAM_OPTIONS.find(opt => opt.startsWith(targetTeam + " ")) || targetTeam;
-      sel.value = exact;
+      const targetTeam = cleanTeam(teamNum);
+      if (targetTeam) {
+        const exact = FORM_TEAM_OPTIONS.find(opt => opt === targetTeam || opt.startsWith(targetTeam + " ")) || "";
+        sel.value = exact;
+      } else {
+        sel.value = "";
+      }
       document.getElementById("scoutMatchInput").value = matchId || "";
       selectSubmitter(state.submitter);
       document.getElementById("scoutDialog").showModal();
@@ -2028,13 +2056,19 @@
         saveLiveState("scouters/" + encodeURIComponent(norm), state.scouters[norm]);
       }
 
+      const rawTeamOption = document.getElementById("scoutTeamSelect").value;
+      if (!rawTeamOption) {
+        alert("Please select a team before saving!");
+        document.getElementById("scoutTeamSelect").focus();
+        return;
+      }
+
       const missingFields = ["auton", "loading", "scoring", "toggle", "driving"].filter(f => currentRatings[f] === null || currentRatings[f] === undefined);
       if (missingFields.length > 0) {
         alert("Please select a score (0–5) for all 5 categories before saving!");
         return;
       }
 
-      const rawTeamOption = document.getElementById("scoutTeamSelect").value;
       const cleanNum = cleanTeam(rawTeamOption.split(" ")[0]);
       const match = document.getElementById("scoutMatchInput").value.trim();
       const comment = document.getElementById("scoutCommentInput").value.trim();
