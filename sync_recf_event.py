@@ -218,7 +218,7 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
             "blue2": blue_teams[1],
         })
 
-        r_score, b_score, has_score = parse_match_score(m.get("score"))
+        r_score, b_score, has_score = parse_match_score(m.get("allianceScores") or m.get("score"))
         status_low = (m.get("status") or "").lower()
         is_done = has_score or status_low in ("scored", "completed", "finished")
         if is_done or started_str or status_low in ("in progress", "live", "active"):
