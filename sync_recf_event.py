@@ -296,14 +296,8 @@ def sync_recf_live(event_id=DEFAULT_RECF_EVENT_ID, rss_uuid=DEFAULT_RSS_EVENT_UU
                     else:
                         st["ties"] += 1; st["wp"] += 1
 
-    # Compute baseline Avg RP per match (from W/L/T) when C2 didn't supply official RP
-    for st in team_stats.values():
-        if st.get("rp") is None:
-            played = st.get("played") or (st.get("wins", 0) + st.get("losses", 0) + st.get("ties", 0))
-            st["rp"] = round(st.get("wp", 0) / played, 2) if played > 0 else 0.0
-
-    # 3. Rankings sorted ascending #1 -> #N
-    rankings = sorted(team_stats.values(), key=lambda x: (x.get("rank", 999), -(x.get("rp") or 0)))
+    # 3. Rankings sorted ascending #1 -> #N (official C2 rank order; leave rp/ap/ep as None if C2 omits them)
+    rankings = sorted(team_stats.values(), key=lambda x: (x.get("rank", 999), -x.get("wp", 0)))
 
     # 4. Push to Firebase RTDB (individual keys so /scouting is NEVER overwritten)
     metadata = {
