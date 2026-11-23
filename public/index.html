@@ -1075,9 +1075,16 @@
     function cleanTeam(t) { return (t || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(); }
 
     function isRecfEvent() {
-      const evMeta = (state.eventsList || []).find(e => e.id === state.currentEventId) || state.metadata || {};
-      if (String((state.metadata && state.metadata.scoring_system) || evMeta.scoring_system || "").toLowerCase() === "recf") return true;
-      return String(evMeta.source || (state.metadata && state.metadata.source) || "").toLowerCase().includes("recf");
+      const evId = Number(state.currentEventId);
+      const evMeta = (state.eventsList || []).find(e => Number(e.id) === evId) || {};
+      const liveMeta = (state.metadata && (!state.metadata.id || Number(state.metadata.id) === evId)) ? state.metadata : {};
+      const scoringSys = String(liveMeta.scoring_system || evMeta.scoring_system || "").toLowerCase();
+      if (scoringSys === "recf") return true;
+      if (scoringSys === "vex") return false;
+      const src = String(evMeta.source || liveMeta.source || "").toLowerCase();
+      if (src.includes("recf") || src.includes("redshirt")) return true;
+      const sku = String(evMeta.sku || liveMeta.sku || "").toUpperCase();
+      return /^(ACH|ENG|INS|ADC)\d/.test(sku);
     }
 
     function getTeamRP(r) {
@@ -1248,6 +1255,9 @@
 
     async function switchEvent(eventId) {
       state.currentEventId = Number(eventId);
+      state.metadata = {};
+      state.wltOfficial = true;
+      state.dqOverrides = {};
       localStorage.setItem("vex_current_event_id", String(eventId));
 
       const u = new URL(window.location);
