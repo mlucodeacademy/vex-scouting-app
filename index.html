@@ -1525,7 +1525,7 @@
       const blueScore = hasBlue ? sc.blue : 0;
 
       let extraTop = "";
-      if (m.num === 27) {
+      if (state.currentEventId === 65031 && m.num === 27) {
         extraTop = `<div class="break-banner">🍔 Lunch Break (12:50 PM – 1:45 PM)</div>`;
       }
 
@@ -1570,20 +1570,35 @@
       `;
     }
 
+    let currentRankMap = {};
+
+    function rebuildRankMap() {
+      currentRankMap = {};
+      const { list } = getEffectiveRankings();
+      const totalPlayed = list.reduce((acc, r) => acc + Number(r.wins || 0) + Number(r.losses || 0) + Number(r.ties || 0), 0);
+      if (totalPlayed === 0) return;
+      list.forEach(r => {
+        const t = r.team ? cleanTeam(r.team.name) : "";
+        if (t && r.rank) currentRankMap[t] = r.rank;
+      });
+    }
+
     function renderTeamChip(rawTeam, matchId) {
       const num = cleanTeam(rawTeam);
       const isFocus = num === state.focusTeam;
       const prof = TEAM_PROFILES[num] || {};
       const name = prof.name || "";
       const stats = getTeamStats(num);
+      const rank = currentRankMap[num];
+      const rankHtml = rank ? `<span style="font-size:0.72rem; font-weight:800; color:var(--accent); margin-left:4px;">#${rank}</span>` : '';
       let badgeHtml = `<span class="scout-badge">★ ${prof.bestSkills || '--'}</span>`;
       if (stats) {
         badgeHtml = `<span class="scout-badge high">★ ${stats.total}</span>`;
       }
       return `
-        <button type="button" class="team-chip ${isFocus ? 'focus-team' : ''}" onclick="openTeamDetail('${num}')" title="${num}: ${name}">
+        <button type="button" class="team-chip ${isFocus ? 'focus-team' : ''}" onclick="openTeamDetail('${num}')" title="${num}${rank ? ' (Rank #' + rank + ')' : ''}: ${name}">
           <div class="team-num">
-            <span>${num}${isFocus ? '★' : ''}</span>
+            <span>${num}${isFocus ? '★' : ''}${rankHtml}</span>
             ${name ? `<span class="team-name-inline">${name}</span>` : ''}
           </div>
           ${badgeHtml}
@@ -1874,6 +1889,7 @@
       const allCountEl = document.getElementById("homeAllCount");
       if (allCountEl) allCountEl.textContent = state.matches.length;
 
+      rebuildRankMap();
       renderHomeHero();
       renderMyMatches();
       renderFieldFilterButtons();
